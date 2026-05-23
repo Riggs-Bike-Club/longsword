@@ -14,6 +14,10 @@ function SWEP:CanIronsight()
 		return false
 	end
 
+if self:UsesMeleeAttack() then
+return false
+end
+
 	return not self:IsSprinting() and not self:GetReloading() and self:GetOwner():IsOnGround() and not self:GetLowered()
 end
 
