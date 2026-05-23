@@ -107,12 +107,14 @@ function SWEP:OnRemove()
 end
 
 function SWEP:ReloadThink()
-	if self.Shotgun == true then
-		self:ShotgunReloadThink()
-	end
-	if self:GetReloadTime() < CurTime() then 
-		self:FinishReload()
-	end
+    if self:UsesShotgunReload() then
+        self:ShotgunReloadThink()
+        return
+    end
+
+    if self:GetReloadTime() < CurTime() then
+        self:FinishReload()
+    end
 end
 
 function SWEP:IronsightsThink()
