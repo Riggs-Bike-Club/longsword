@@ -18,7 +18,13 @@ function SWEP:CanIronsight()
 end
 
 function SWEP:CanReload()
-	return self:Ammo1() > 0 and self:Clip1() < self.Primary.ClipSize
-		and not self:GetReloading() and self:GetNextPrimaryFire() < CurTime() and (self.NextFMToggle or 0) < CurTime()
+    local clipSize = self.Primary.ClipSize
+
+    if self:UsesShotgunReload() and self.CanChamberShotgun then
+        clipSize = clipSize + 1
+    end
+
+    return self:Ammo1() > 0 and self:Clip1() < clipSize
+        and !self:GetReloading() and self:GetNextPrimaryFire() < CurTime() and ( self.NextFMToggle or 0 ) < CurTime()
 end
 
