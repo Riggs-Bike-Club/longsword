@@ -63,6 +63,14 @@ function SWEP:CalculateSpread()
 end
 
 function SWEP:PrimaryAttack()
+	if self:UsesProjectileAttack() then
+		return self:PrimaryProjectileAttack()
+	end
+
+	if self:UsesMeleeAttack() then
+		return self:PrimaryMeleeAttack()
+	end
+
 	if not self:CanShoot() then return end
 
 	local clip = self:Clip1()
