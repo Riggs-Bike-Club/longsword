@@ -21,9 +21,9 @@ function SWEP:Reload()
 
 	-- self:EmitWeaponSound("LS_Generic.Reload")
 
-	if self.Shotgun then
-		return self:ReloadShotgun()
-	end
+    if self:UsesShotgunReload() then
+        return self:ReloadShotgun()
+    end
 
 	self:GetOwner():DoReloadEvent()
 
