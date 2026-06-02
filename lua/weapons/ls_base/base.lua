@@ -56,6 +56,19 @@ SWEP.scopedIn = SWEP.scopedIn or false
 SWEP.BobScale = 0
 SWEP.SwayScale = 0
 
+-- Pullback (pump) animations.
+-- A short viewmodel animation played a moment after each shot, used by pump
+-- shotguns, lever-/bolt-action rifles and other manually-cycled weapons.
+-- Override the WHOLE table in your weapon (like SWEP.Spread) rather than a
+-- single field, so you don't mutate the shared base default.
+SWEP.Pullback = {}
+SWEP.Pullback.Enabled = false             -- play a pullback animation after firing
+SWEP.Pullback.Delay = 0.5                 -- extra seconds added on top of the fire animation's duration
+SWEP.Pullback.Anims = { ACT_VM_PULLBACK } -- one is chosen at random each shot; accepts activities or raw sequence ids
+SWEP.Pullback.Sound = nil                 -- optional sound emitted with the animation
+-- For per-shot custom logic (e.g. different anims while ironsighted) override
+-- SWEP:GetPullbackAnimation() instead.
+
 function SWEP:SetupDataTables()
 	self:NetworkVar("Bool", 0, "Ironsights")
 	self:NetworkVar("Bool", 1, "Reloading")
