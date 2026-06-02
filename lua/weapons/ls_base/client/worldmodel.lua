@@ -16,6 +16,7 @@ function SWEP:DrawWorldModel( f )
 		-- Specify a good position
 		local offsetVec = self.WMOffset.Position
 		local offsetAng = self.WMOffset.Angle or angle_zero
+		local scale = self.WMOffset.Scale or 1
 
 		local boneid = _Owner:LookupBone( "ValveBiped.Bip01_R_Hand" ) -- Right Hand
 		if !boneid then return end
@@ -27,6 +28,8 @@ function SWEP:DrawWorldModel( f )
 
 		WorldModel:SetPos(newPos)
 		WorldModel:SetAngles(newAng)
+
+		WorldModel:SetModelScale(scale, 0)
 
 		WorldModel:SetupBones()
 	else
