@@ -72,9 +72,10 @@ local trail
 function SWEP:ShootEffects()
 	local ply = self:GetOwner()
 	local vm = ply:GetViewModel()
+	local fireDuration = 0
 	if not self:GetIronsights() or self:ShouldAnimateFire() then
 		local anim = self:GetFireAnimation()
-		self:PlayAnim(anim)
+		fireDuration = self:PlayAnim(anim) or 0
 		self:QueueIdle()
 	end
 
@@ -130,16 +131,66 @@ function SWEP:ShootEffects()
 		self:CustomShootEffects()
 	end
 
-	if self.PumpDelay then
-		timer.Simple(self.PumpDelay, function()
-			local anim = self.PumpAnimation or ACT_VM_PULLBACK
-			if self.GetPumpAnimation then
-				anim = self:GetPumpAnimation()
-			end
+	if self:ShouldPullback() then
+		-- Wait for the fire animation to finish, then the configured delay on top.
+		timer.Simple(fireDuration + self:GetPullbackDelay(), function()
+			if not IsValid(self) then return end
 
-			self:PlayAnim(anim)
-			self:QueueIdle()
+			self:DoPullback()
 		end)
+	end
+end
+
+-- Pullback (pump) animations -------------------------------------------------
+-- Driven by the SWEP.Pullback property list (see ls_base/base.lua). Plays a
+-- short viewmodel animation once the fire animation finishes, plus the
+-- configured delay on top, used by pump shotguns and other manually-cycled
+-- weapons. The legacy PumpDelay / PumpAnimation / GetPumpAnimation properties
+-- are still honoured as a fallback.
+
+function SWEP:ShouldPullback()
+	if self.Pullback and self.Pullback.Enabled then
+		return true
+	end
+
+	return self.PumpDelay != nil
+end
+
+function SWEP:GetPullbackDelay()
+	if self.Pullback and self.Pullback.Delay then
+		return self.Pullback.Delay
+	end
+
+	return self.PumpDelay or 0
+end
+
+function SWEP:GetPullbackAnimation()
+	local pullback = self.Pullback
+
+	if pullback then
+		if pullback.Anims and #pullback.Anims > 0 then
+			return pullback.Anims[math.random(1, #pullback.Anims)]
+		end
+
+		if pullback.Anim then
+			return pullback.Anim
+		end
+	end
+
+	if self.GetPumpAnimation then
+		return self:GetPumpAnimation()
+	end
+
+	return self.PumpAnimation or ACT_VM_PULLBACK
+end
+
+function SWEP:DoPullback()
+	self:PlayAnim(self:GetPullbackAnimation())
+	self:QueueIdle()
+
+	local pullback = self.Pullback
+	if pullback and pullback.Sound then
+		self:EmitSound(pullback.Sound)
 	end
 end
 
