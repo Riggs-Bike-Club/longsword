@@ -183,6 +183,10 @@ function SWEP:DrawHUD()
 	for attachment, _ in pairs(self.EquippedAttachments or {}) do
 		self:DrawAttachmentHUD(attachment, hdr)
 	end
+
+	if self.CustomDrawHUD then
+		self:CustomDrawHUD()
+	end
 end
 
 function SWEP:RenderScreenspaceEffects()
