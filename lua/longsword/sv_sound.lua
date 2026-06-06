@@ -8,7 +8,7 @@ function meta:EmitDynSound(path, pitch, level, volume, noMuffle)
 
     local rec = RecipientFilter()
 
-    for _, ply in pairs(player.GetAll()) do
+    for _, ply in player.Iterator() do
         if ply:GetPos():DistToSqr(self:GetPos()) < (5000 ^ 2) then
             rec:AddPlayer(ply)
         end
