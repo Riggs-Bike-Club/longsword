@@ -8,7 +8,9 @@ function SWEP:PreDrawViewModel(vm)
 
 	self:OffsetThink()
 
-	return self:ScopedIn()
+	-- HideViewModel lets a weapon suppress its own viewmodel (e.g. an overlay
+	-- scope that replaces the first-person view) the same way a real scope does.
+	return self:ScopedIn() or self.HideViewModel
 end
 
 function SWEP:GetOffset()
