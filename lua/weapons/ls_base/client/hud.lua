@@ -95,9 +95,11 @@ function SWEP:DrawAttachmentHUD(attID, hdr)
 	end
 end
 
-function SWEP:ScopedIn()
-	if not self:GetIronsights() then return false end
-
+-- Whether a sniper scope is equipped, regardless of whether the player is
+-- currently aiming. TranslateFOV uses this to keep scoped weapons on their
+-- timed FOV transition even while the sights are dropping (when GetIronsights
+-- has already flipped off but the scope FOV is still easing out).
+function SWEP:HasSniperScope()
 	for attID, _ in pairs(self.EquippedAttachments or {}) do
 		local data = self.Attachments[attID]
 		if not data then continue end
@@ -106,6 +108,14 @@ function SWEP:ScopedIn()
 			return true
 		end
 	end
+
+	return false
+end
+
+function SWEP:ScopedIn()
+	if not self:GetIronsights() then return false end
+
+	return self:HasSniperScope()
 end
 
 local yInc = 20
