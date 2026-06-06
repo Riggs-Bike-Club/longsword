@@ -368,7 +368,16 @@ SWEP.FOVMultiplier = 1
 SWEP.LastFOVUpdate = 0 -- gets called many times per frame... weird.
 function SWEP:TranslateFOV(fov)
 	if self.LastFOVUpdate < CurTime() then
-		self.FOVMultiplier = Lerp(RealFrameTime() * 4, self.FOVMultiplier or 0, self:GetViewFOV() or 1)
+		-- Normal ironsights drive the zoom straight from the ADS animation
+		-- fraction, so the FOV stays perfectly in sync with the sights both
+		-- raising and lowering (IronsightsFrac eases in and back out). Scoped
+		-- weapons keep their own timed transition via GetViewFOV.
+		if self.IronsightsFOV and not self:HasSniperScope() and (self:GetIronsights() or (self.IronsightsFrac or 0) > 0) then
+			self.FOVMultiplier = Lerp(self.IronsightsFrac or 0, 1, self.IronsightsFOV)
+		else
+			self.FOVMultiplier = Lerp(RealFrameTime() * 4, self.FOVMultiplier or 0, self:GetViewFOV() or 1)
+		end
+
 		self.LastFOVUpdate = CurTime()
 	end
 
