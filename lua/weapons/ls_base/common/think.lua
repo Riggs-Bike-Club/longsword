@@ -286,6 +286,10 @@ function SWEP:OnRemove()
 			self.Owner:GetViewModel():SetMaterial("")
 		end
 	end
+
+	if self.CustomOnRemove then
+		self:CustomOnRemove()
+	end
 end
 
 function SWEP:ReloadThink()
