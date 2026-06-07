@@ -1,13 +1,29 @@
-function SWEP:Inspect()
-	if not self.InspectAnimation or not self.InspectAnimations then return end
-
-	local anim = self.InspectAnimation or "inspect"
-	if self.InspectAnimations then
-		anim = self.InspectAnimations[math.random(1, #self.InspectAnimations)]
+-- Returns a random inspect animation, preferring the InspectAnimations list and falling back to the single InspectAnimation field.
+function SWEP:GetInspectAnim()
+	local anims = self.InspectAnimations
+	if anims and #anims > 0 then
+		return anims[math.random(#anims)]
 	end
 
-	local dur = self:PlayAnim(anim)
-	self:SetNextPrimaryFire(CurTime() + dur)
+	return self.InspectAnimation
+end
+
+function SWEP:Inspect()
+	-- Reload() is called every tick while the key is held, so gate on InspectArmed (re-armed in Think only once reload is released) to keep holding from re-triggering, plus a cooldown so rapid re-pressing can't restart it mid-animation.
+	if not self.InspectArmed then return end
+	if (self.NextInspectAllowed or 0) > CurTime() then return end
+
+	local anim = self:GetInspectAnim()
+	if not anim then return end
+
+	self.InspectArmed = false
+
+	local dur = self:PlayAnim(anim) or 0
+	if dur > 0 then
+		self:SetNextPrimaryFire(CurTime() + dur)
+		self.NextInspectAllowed = CurTime() + dur + (self.InspectCooldown or 0)
+	end
+
 	self:QueueIdle()
 end
 

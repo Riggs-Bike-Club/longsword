@@ -76,9 +76,13 @@ function SWEP:CalcViewBob(eyePos, eyeAng)
 		mv = mv * (self.IronsightsBobMultiplier or 0.1)
 	end
 
+	-- A dedicated walk/sprint viewmodel animation already supplies the locomotion motion, so damp the procedural bob/roll when the weapon has one -- otherwise the animation and the procedural sway stack and fight, which reads as the muddled, frame-breaking motion seen only on animated weapons. Non-animated weapons keep the full bob (scale 1).
+	local bobScale = self:HasMovementAnims() and (self.MoveAnimBobScale or 0) or 1
+	mv = mv * bobScale
+
 	eyePos, eyeAng = self:ViewBob(eyePos, eyeAng, mv, ct, ft)
 
-	local rd = move:Dot(self:GetOwner():GetRight()) * 0.05 * (self:GetIronsights() and 0.4 or 1)
+	local rd = move:Dot(self:GetOwner():GetRight()) * 0.05 * (self:GetIronsights() and 0.4 or 1) * bobScale
 	local rdSmooth = Lerp(ft * 4, self.VMRoll or rd, rd)
 	self.VMRoll = rdSmooth
 	eyeAng.r = eyeAng.r + rdSmooth
@@ -90,13 +94,24 @@ end
 function SWEP:ViewBob(eyePos, eyeAng, mv, ct, ft)
 	local spr = self:IsSprinting()
 
-	if spr then
-		ct = ct * 1.5
-	else
-		ct = ct * 1.05
-		mv = mv * 2.5
+	-- Advance a continuous bob phase instead of scaling absolute time by a per-state factor. ct is UnPredictedCurTime (a large value), so ct * 1.5 versus ct * 1.05 makes the sin/cos phase leap the instant sprint toggles -- that jump is the snap on the walk<->sprint transition, and the per-frame jitter when IsSprinting() flickers near its speed threshold.
+	local rateTarget = spr and 1.5 or 1.05
+	local ampTarget = spr and 1 or 2.5
+
+	-- GetViewModelPosition (and therefore this) can run several times per frame, so advance the integrator at most once per frame, keyed off RealTime which is constant within a frame. Stepping the phase per call would speed up and jitter the bob -- exactly while moving, where it is visible.
+	local rt = RealTime()
+	local dt = math.Clamp(rt - (self.VMBobTime or rt), 0, 0.1)
+	self.VMBobTime = rt
+
+	if dt > 0 then
+		self.VMBobRate = Lerp(dt * 6, self.VMBobRate or rateTarget, rateTarget)
+		self.VMBobAmp = Lerp(dt * 6, self.VMBobAmp or ampTarget, ampTarget)
+		self.VMBobPhase = (self.VMBobPhase or 0) + dt * self.VMBobRate
 	end
-	
+
+	mv = mv * (self.VMBobAmp or ampTarget)
+	ct = self.VMBobPhase or 0
+
 	local muz = self.MuzzleData or {}
 
 	local muzPos = muz.Pos or Vector()
@@ -192,10 +207,11 @@ end
 
 function SWEP:ViewSwayOffset(eyePos, eyeAng)
 	local ft = RealFrameTime()
-    local swayRaw = self.VMSwayAng or Angle()
+    local raw = self.VMSwayAng or angle_zero
 	local sway = 1.4 * (self:GetIronsights() and 0.2 or 1)
 
-    swayRaw.r = -(swayRaw.y * 0.4) * 1.5 * sway
+    -- Build a fresh target; do NOT write into self.VMSwayAng (SwayThink owns it). Aliasing it here overwrote the roll every render frame and fought the sway lerp.
+    local swayRaw = Angle( raw.p, raw.y, -(raw.y * 0.4) * 1.5 * sway )
 
     self.VMSwayAngSmooth = LerpAngle(ft * 2, self.VMSwayAngSmooth or swayRaw, swayRaw)
     local ang = self.VMSwayAngSmooth * 2

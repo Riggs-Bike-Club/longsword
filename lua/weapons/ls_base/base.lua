@@ -52,6 +52,62 @@ SWEP.IronsightsSensitivity = 0.8
 SWEP.IronsightsCrosshair = false
 SWEP.scopedIn = SWEP.scopedIn or false
 
+-- Idle animations played while iron-sighted. When set, they replace the normal
+-- idle for as long as the weapon is aimed down sights, and are played the moment
+-- the player enters or leaves ironsights (so the swap is instant rather than
+-- waiting for the next idle cycle). Both accept an activity (ACT_VM_*) or a raw
+-- sequence name string; leave nil to keep using the standard idle.
+-- EmptyIronsightsIdleAnim takes priority while the clip is empty, falling back to
+-- IronsightsIdleAnim when it is not set.
+SWEP.IronsightsIdleAnim = nil
+SWEP.EmptyIronsightsIdleAnim = nil
+
+-- Looping viewmodel animations played while the owner is on the move. WalkAnim
+-- covers normal ground movement and SprintAnim covers sprinting; each swaps in
+-- the instant the movement state changes and falls back to the standard idle
+-- when nil. Both accept an activity (ACT_VM_*) or a raw sequence name string.
+-- They never interrupt a draw, fire or reload -- the matching loop is picked up
+-- once that animation finishes.
+SWEP.WalkAnim = nil
+SWEP.SprintAnim = nil
+
+-- Seconds a new movement state must hold before the loop actually swaps. Stops
+-- velocity hovering near the walk/sprint thresholds from rapidly flipping the
+-- viewmodel and stuttering between frames.
+SWEP.MoveAnimDebounce = 0.1
+
+-- How much of the procedural camera bob/roll to keep when the weapon has its own
+-- walk/sprint animation. The animation already supplies the locomotion motion, so
+-- this defaults to 0 -- the procedural bob is disabled and the animation drives
+-- everything, which stops the two stacking and fighting (the muddled motion seen
+-- only on animated weapons). Raise toward 1 to layer some procedural bob back on
+-- top. No effect on weapons without WalkAnim/SprintAnim.
+SWEP.MoveAnimBobScale = 0
+
+-- Inspect animations. InspectAnimations is a list (one is chosen at random) and
+-- InspectAnimation is a single-sequence fallback; both accept an activity
+-- (ACT_VM_*) or a raw sequence name string. They drive the manual inspect (press
+-- reload on a full clip) and, when AutoInspect is enabled, the random idle
+-- inspect below.
+SWEP.InspectAnimation = nil
+SWEP.InspectAnimations = nil
+
+-- Extra cooldown (seconds) after a manual inspect (reload on a full clip) before
+-- another may play, on top of the animation's own length. Holding reload only
+-- triggers a single inspect regardless of this; the cooldown rate-limits rapid
+-- re-pressing. 0 means you can inspect again as soon as the animation finishes.
+SWEP.InspectCooldown = 0
+
+-- Random idle inspects. When AutoInspect is enabled the weapon occasionally
+-- plays one of its inspect animations after sitting idle for a random number of
+-- seconds (between InspectMinDelay and InspectMaxDelay), and cancels it the
+-- instant the owner shoots, aims down sights or starts moving. Off by default so
+-- weapons that only want the manual inspect are unaffected.
+SWEP.AutoInspect = false
+SWEP.InspectMinDelay = 14
+SWEP.InspectMaxDelay = 35
+SWEP.InspectSound = nil
+
 
 SWEP.BobScale = 0
 SWEP.SwayScale = 0
@@ -101,6 +157,15 @@ function SWEP:ResetValues()
 
 	self:SetRecoil(0)
 	self:SetNextIdle(0)
+
+	self.LastMoveState = nil
+	self.PendingMoveState = nil
+
+	self.Inspecting = false
+	self.NextInspect = nil
+
+	self.InspectArmed = true
+	self.NextInspectAllowed = 0
 
 	self.OriginalVMFov = self.ViewModelFOV
 end
