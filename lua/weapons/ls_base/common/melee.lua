@@ -52,6 +52,15 @@ function SWEP:ClubAttack()
             owner:EmitSound( self.Primary.ImpactSound )
         end
 
+        local effectdata = EffectData()
+        effectdata:SetOrigin(tr.HitPos)
+        effectdata:SetStart(tr.StartPos)
+        effectdata:SetSurfaceProp(tr.SurfaceProps)
+        effectdata:SetEntity(tr.Entity)
+        effectdata:SetHitBox(tr.HitBoxBone or 0)
+        effectdata:SetDamageType(DMG_BULLET)
+        util.Effect("Impact", effectdata)
+
         if self.Primary.ImpactEffect then
             local effect = EffectData()
             effect:SetStart( tr.HitPos )
@@ -91,21 +100,13 @@ function SWEP:ClubAttack()
                 end
             end
 
-            if tr.MatType == MAT_FLESH then
-                ent:EmitSound( "Flesh.ImpactHard" )
-
+            if ( tr.MatType == MAT_FLESH ) then
                 local effect = EffectData()
-                effect:SetStart( tr.HitPos )
-                effect:SetNormal( tr.HitNormal )
-                effect:SetOrigin( tr.HitPos )
+                effect:SetStart(tr.HitPos)
+                effect:SetNormal(tr.HitNormal)
+                effect:SetOrigin(tr.HitPos)
 
-                util.Effect( "BloodImpact", effect, true, true )
-            elseif tr.MatType == MAT_WOOD then
-                ent:EmitSound( "Wood.ImpactHard" )
-            elseif tr.MatType == MAT_CONCRETE then
-                ent:EmitSound( "Concrete.ImpactHard" )
-            elseif self.Primary.ImpactSoundWorldOnly then
-                owner:EmitSound( self.Primary.ImpactSound )
+                util.Effect("BloodImpact", effect, true, true)
             end
         elseif self.MeleeHitFallback and self:MeleeHitFallback( tr ) then
             return
