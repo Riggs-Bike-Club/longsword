@@ -61,7 +61,7 @@ function SWEP:CalcViewBob(eyePos, eyeAng)
 	local ft8 = ft * 8
 
 	local ply = self:GetOwner()
-	
+
 	local ovel = ply:GetVelocity()
 	local move = Vector(ovel.x, ovel.y, 0)
 	local movement = move:LengthSqr()
@@ -86,7 +86,7 @@ function SWEP:CalcViewBob(eyePos, eyeAng)
 	local rdSmooth = Lerp(ft * 4, self.VMRoll or rd, rd)
 	self.VMRoll = rdSmooth
 	eyeAng.r = eyeAng.r + rdSmooth
-	
+
 
 	return eyePos, eyeAng
 end
@@ -199,7 +199,7 @@ function SWEP:SwayThink()
     dist.y = math.Clamp(dist.y, -5, 5)
     dist.r = math.Clamp(dist.r, -5, 5)
 
-	
+
     self.VMSwayAng = LerpAngle(ft * 32, self.VMSwayAng or dist, dist)
     self.VMSwayLastAng = eyeAng
 	self.VMSwayBeforeAng = lastAng
@@ -218,10 +218,10 @@ function SWEP:ViewSwayOffset(eyePos, eyeAng)
 
 	local mul = (self.SwayPosMul or 1) + (self.SwayMul or 1)
     return longsword.math.translate(
-        eyePos, 
-        eyeAng, 
-        Vector(ang.y * 0.1 * mul, 0, -ang.p * 0.1 * mul), 
-        ang, 
+        eyePos,
+        eyeAng,
+        Vector(ang.y * 0.1 * mul, 0, -ang.p * 0.1 * mul),
+        ang,
         sway
     )
 end
@@ -236,7 +236,7 @@ function SWEP:JumpOffset(eyePos, eyeAng)
 	local grounded = ply:IsOnGround()
 
 	local curoffset = self.VMJump or 0
-	
+
 	local offset = Lerp(ft * (grounded and 4 or 0.4), curoffset, grounded and 0 or 1)
 
 
@@ -324,10 +324,10 @@ function SWEP:GetViewModelPosition( pos, ang )
 				Ang = vm:GetAngles()
 			}
 		end
-	
+
 		att.Pos = vm:WorldToLocal(att.Pos)
 		att.Ang = vm:WorldToLocalAngles(att.Ang)
-	
+
 		self.MuzzleData = att
 	end
 
@@ -376,7 +376,7 @@ function SWEP:GetViewFOV()
 	if (not self.NoSprintFOV) and self:IsSprinting() then
 		return self.SprintFOV or 1.08
 	end
-	
+
 	return 1
 end
 
@@ -397,7 +397,7 @@ function SWEP:TranslateFOV(fov)
 		self.LastFOVUpdate = CurTime()
 	end
 
-	return fov * self.FOVMultiplier
+	return fov * (GetConVar("longsword_vmfov") and GetConVar("longsword_vmfov"):GetFloat() or 1) * self.FOVMultiplier
 end
 
 function SWEP:CalcView(ply, origin, angles, fov)
