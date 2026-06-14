@@ -397,7 +397,7 @@ function SWEP:TranslateFOV(fov)
 		self.LastFOVUpdate = CurTime()
 	end
 
-	return fov * (GetConVar("longsword_vmfov") and GetConVar("longsword_vmfov"):GetFloat() or 1) * self.FOVMultiplier
+	return fov * self.FOVMultiplier
 end
 
 function SWEP:CalcView(ply, origin, angles, fov)
