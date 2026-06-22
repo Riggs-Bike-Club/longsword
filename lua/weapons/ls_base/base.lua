@@ -272,13 +272,12 @@ function SWEP:Deploy()
 
 	self:EmitWeaponSound(self:GetDeploySound())
 
-	local seq = vm:SelectWeightedSequence(self.DrawAnim or ACT_VM_DRAW)
-	local dur = vm:SequenceDuration(dur)
+	if not self.NoDrawAnim then
+		-- PlayAnim returns nil for a viewmodel that lacks the draw sequence (e.g. the first aid kit has no ACT_VM_DRAW), so fall back to 0 to avoid arithmetic on nil.
+		local dur = self:PlayAnim(self.DrawAnim or ACT_VM_DRAW) or 0
 
-	if dur != 0 and dur and not self.NoDrawAnim then
-		self:SetNextPrimaryFire(CurTime() + self:PlayAnim(self.DrawAnim or ACT_VM_DRAW))
+		self:SetNextPrimaryFire(CurTime() + dur)
 		self:QueueIdle()
-
 	end
 
 	if self.PlayerSpeedMultiplier then
