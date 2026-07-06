@@ -53,6 +53,10 @@ end
 
 function SWEP:GetFireAnimation()
 	if self:GetIronsights() then
+		if istable(self.IronsightsAnimation) then
+			return self.IronsightsAnimation[math.random(#self.IronsightsAnimation)]
+		end
+
 		return self.IronsightsAnimation or ACT_VM_PRIMARYATTACK_1
 	end
 
@@ -61,7 +65,7 @@ function SWEP:GetFireAnimation()
 	end
 
 	if self.FireAnims then
-		return self.FireAnims[math.random(1, #self.FireAnims)]
+		return self.FireAnims[math.random(#self.FireAnims)]
 	end
 
 	return self.FireAnim or ACT_VM_PRIMARYATTACK
@@ -77,6 +81,7 @@ function SWEP:ShootEffects()
 		local anim = self:GetFireAnimation()
 		fireDuration = self:PlayAnim(anim) or 0
 		self:QueueIdle()
+		print("Firing animation: " .. anim)
 	end
 
 	self:PlayFireSound()
@@ -169,7 +174,7 @@ function SWEP:GetPullbackAnimation()
 
 	if pullback then
 		if pullback.Anims and #pullback.Anims > 0 then
-			return pullback.Anims[math.random(1, #pullback.Anims)]
+			return pullback.Anims[math.random(#pullback.Anims)]
 		end
 
 		if pullback.Anim then
