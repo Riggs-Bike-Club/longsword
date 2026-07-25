@@ -144,6 +144,16 @@ function SWEP:MovementThink()
 
 	local state = self:GetMoveState()
 
+	-- Aiming owns the loop (GetIdleAnim resolves to the ironsights/standing idle),
+	-- so no swap happens here -- but the tracker still follows the real movement
+	-- state, otherwise it stays stuck on whatever was playing when the player
+	-- aimed and blocks the swap back once the sights come down.
+	if self:GetIronsights() then
+		self.PendingMoveState = state
+		self.LastMoveState = state
+		return
+	end
+
 	-- Debounce: restart the timer whenever the raw state changes, so a swap only
 	-- commits after the new state has stayed put for MoveAnimDebounce seconds.
 	if state != self.PendingMoveState then
