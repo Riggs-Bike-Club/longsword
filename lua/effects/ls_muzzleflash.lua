@@ -34,17 +34,14 @@ function EFFECT:Init( data )
 
     end
 
-    -- if not wep.NoFlashShock then
-    --     local size = wep.MuzzleFlashShock or "small"
-    --     local name = "muzzle_smoke_shock_" .. size
+    if ( !wep.NoFlashShock and ( game.SinglePlayer() or IsFirstTimePredicted() ) ) then
+        local ed = EffectData()
+        ed:SetEntity( data:GetEntity() )
+        ed:SetAttachment( data:GetAttachment() )
+        ed:SetMagnitude( shockSizes[wep.MuzzleFlashShock or "small"] or 1 )
 
-    --     ParticleEffectAttach(
-    --         name,
-    --         PATTACH_POINT_FOLLOW,
-    --         data:GetEntity(),
-    --         data:GetAttachment()
-    --     )
-    -- end
+        util.Effect( "ls_muzzle_shock", ed )
+    end
 
     if CLIENT then
         local light = DynamicLight(ent:EntIndex())
