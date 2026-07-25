@@ -86,7 +86,6 @@ function SWEP:ShootEffects()
 		local anim = self:GetFireAnimation()
 		fireDuration = self:PlayAnim(anim) or 0
 		self:QueueIdle()
-		print("Firing animation: " .. anim)
 	end
 
 	self:PlayFireSound()
