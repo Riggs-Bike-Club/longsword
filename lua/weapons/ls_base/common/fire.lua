@@ -88,7 +88,7 @@ function SWEP:PrimaryAttack()
 	else
 		if not self.NoDryFireAnim then
 			if self.HammerDown == true then return end
-			self:PlayAnim(ACT_VM_DRYFIRE)
+			self:PlayAnim(self:GetDryFireAnim())
 			self:QueueIdle()
 			self.HammerDown = true
 		end
