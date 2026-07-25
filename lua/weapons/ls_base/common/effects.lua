@@ -135,7 +135,7 @@ function SWEP:ShootEffects()
 	self:PlayAnimWorld(ACT_VM_PRIMARYATTACK)
 	self:GetOwner():SetAnimation(PLAYER_ATTACK1)
 
-	self:QueueIdle()
+	-- The fire animation queues its own idle above. Queueing a second one here measured whatever the viewmodel happened to be playing, so a shot that plays no fire animation at all (ironsighted, with UseIronsightsRecoil driving the recoil procedurally) queued an idle the full length of the idle loop it was already in -- several seconds during which the weapon counted as mid-animation and refused to swap loops, so the slide stayed forward after the last round.
 	if self.CustomShootEffects then
 		self:CustomShootEffects()
 	end
