@@ -350,7 +350,52 @@ function SWEP:Deploy()
 	return true
 end
 
+-- Plays the holster animation and defers the weapon switch until it has finished, returning true once the switch may go ahead. The engine tears the viewmodel down the moment Holster() succeeds, so the animation is only ever seen if the switch is cancelled and re-issued afterwards -- which is what the timer below does. Anything the player cannot be left stuck in the middle of (no animation, no weapon to switch to, dead, dropped) passes straight through.
+function SWEP:HandleHolsterAnim(wep)
+	if not self.DoHolsterAnim then return true end
+
+	local anim = self:GetHolsterAnim()
+	if not anim then return true end
+
+	local owner = self:GetOwner()
+	if not IsValid(owner) or not owner:IsPlayer() or not owner:Alive() then return true end
+	if not IsValid(wep) or wep == self then return true end
+
+	-- Second pass: the deferred switch came back around, so drop the marker and let it through. The slack covers the timer landing on the tick just short of the animation's exact end, which would otherwise cancel the switch it was fired to make.
+	if self.HolsterAnimEnd then
+		if CurTime() < self.HolsterAnimEnd - 0.05 then return false end
+
+		self.HolsterAnimEnd = nil
+
+		return true
+	end
+
+	local dur = self:PlayAnim(anim) or 0
+	if dur <= 0 then return true end
+
+	self.HolsterAnimEnd = CurTime() + dur
+
+	self:SetNextIdle(0)
+	self:SetNextPrimaryFire(CurTime() + dur)
+
+	-- The client follows the switch through the networked active weapon, so only the server re-issues it.
+	if SERVER then
+		local class = wep:GetClass()
+
+		timer.Simple(dur, function()
+			if not IsValid(self) or not IsValid(owner) then return end
+			if owner:GetActiveWeapon() != self then return end
+
+			owner:SelectWeapon(class)
+		end)
+	end
+
+	return false
+end
+
 function SWEP:Holster(w)
+	if not self:HandleHolsterAnim(w) then return false end
+
 	local vm = self:GetOwner():GetViewModel()
 
 	self:ResetValues()
