@@ -326,9 +326,12 @@ function SWEP:Deploy()
 
 	self:EmitWeaponSound(self:GetDeploySound())
 
+	-- A holster animation cut short by a fresh deploy (dying mid-switch, an admin forcing the weapon back out) would otherwise leave the marker behind and block the next holster for its duration.
+	self.HolsterAnimEnd = nil
+
 	if not self.NoDrawAnim then
 		-- PlayAnim returns nil for a viewmodel that lacks the draw sequence (e.g. the first aid kit has no ACT_VM_DRAW), so fall back to 0 to avoid arithmetic on nil.
-		local dur = self:PlayAnim(self.DrawAnim or ACT_VM_DRAW) or 0
+		local dur = self:PlayAnim(self:GetDrawAnim()) or 0
 
 		self:SetNextPrimaryFire(CurTime() + dur)
 		self:QueueIdle()
