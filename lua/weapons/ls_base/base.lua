@@ -212,6 +212,8 @@ function SWEP:ResetValues()
 
 	self.LastMoveState = nil
 	self.PendingMoveState = nil
+	self.LastEmptyState = nil
+	self.HolsterAnimEnd = nil
 
 	self.Inspecting = false
 	self.NextInspect = nil
