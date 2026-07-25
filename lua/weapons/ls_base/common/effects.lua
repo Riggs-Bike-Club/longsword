@@ -60,7 +60,12 @@ function SWEP:GetFireAnimation()
 		return self.IronsightsAnimation or ACT_VM_PRIMARYATTACK_1
 	end
 
-	if self:Clip1() == 0 and self.DoLastFireAnim then
+	-- The shot that empties the clip: viewmodels that lock the slide back animate it as a separate sequence (one per fire variant, hence the list) rather than as part of the normal fire animation.
+	if self.DoLastFireAnim and self:IsClipEmpty() then
+		if self.LastFireAnims and #self.LastFireAnims > 0 then
+			return self.LastFireAnims[math.random(#self.LastFireAnims)]
+		end
+
 		return self.LastFireAnim or ACT_VM_PRIMARYATTACK_EMPTY
 	end
 
