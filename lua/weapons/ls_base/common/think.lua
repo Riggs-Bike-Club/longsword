@@ -78,41 +78,61 @@ function SWEP:GetMoveState()
 	return "idle"
 end
 
--- Picks the looping animation for the current state: ironsighted variants first
--- (empty taking priority over the loaded one), then sprint/walk movement loops,
--- then the standard idle/empty idle.
+-- Picks the looping animation for the current state: ironsighted variants first,
+-- then sprint/walk movement loops, then the standard idle. Every tier resolves
+-- its own empty-clip counterpart, so a weapon with walk/sprint/idle_empty
+-- sequences keeps the locked-back slide on screen the whole time it is dry.
 function SWEP:GetIdleAnim()
-	if self:GetIronsights() then
-		if self.EmptyIronsightsIdleAnim and self:Clip1() == 0 then
-			return self.EmptyIronsightsIdleAnim
+	local bIronsights = self:GetIronsights()
+
+	if bIronsights then
+		local anim = self:ResolveEmptyAnim(self.IronsightsIdleAnim, self.EmptyIronsightsIdleAnim)
+		if anim then
+			return anim
+		end
+	end
+
+	-- Movement loops are skipped entirely while aiming: a weapon without a dedicated ironsights idle must still drop to the standing idle, otherwise the walk/sprint loop that was playing when the player aimed keeps running until they lower the sights.
+	if not bIronsights then
+		local state = self:GetMoveState()
+		if state == "sprint" then
+			local anim = self:ResolveEmptyAnim(self.SprintAnim, self.EmptySprintAnim)
+			if anim then
+				return anim
+			end
 		end
 
-		if self.IronsightsIdleAnim then
-			return self.IronsightsIdleAnim
+		if state == "walk" then
+			local anim = self:ResolveEmptyAnim(self.WalkAnim, self.EmptyWalkAnim)
+			if anim then
+				return anim
+			end
 		end
 	end
 
-	local state = self:GetMoveState()
-	if state == "sprint" and self.SprintAnim then
-		return self.SprintAnim
-	end
-
-	if state == "walk" and self.WalkAnim then
-		return self.WalkAnim
-	end
-
-	if self.EmptyIdleAnim and self:Clip1() == 0 then
-		return self.EmptyIdleAnim
-	end
-
-	return self.IdleAnim or ACT_VM_IDLE
+	return self:ResolveEmptyAnim(self.IdleAnim, self.EmptyIdleAnim) or ACT_VM_IDLE
 end
 
--- Plays whatever looping anim the current state calls for (idle/walk/sprint/ADS) and syncs the movement tracker. Deliberately does NOT queue idle: these loops play continuously, so re-queuing would replay them from frame 0 every cycle and snap.
+-- Plays whatever looping anim the current state calls for (idle/walk/sprint/ADS) and syncs the movement and clip trackers to the state the loop was picked for. Deliberately does NOT queue idle: these loops play continuously, so re-queuing would replay them from frame 0 every cycle and snap.
 function SWEP:ResumeIdleLoop(bKeepCycle)
 	self:PlayAnim( self:GetIdleAnim(), bKeepCycle )
 	self.LastMoveState = self:GetMoveState()
 	self.PendingMoveState = nil
+	self.LastEmptyState = self:IsClipEmpty()
+end
+
+-- Re-plays the loop the new ironsights state calls for. Runs on every ADS toggle rather than only for weapons with a dedicated ironsights idle, because a walk/sprint loop entered just before aiming would otherwise keep looping until the sights come back down -- the player stands still, aimed, with the hands still sprinting.
+function SWEP:RefreshIronsightsLoop()
+	if self:GetReloading() then return end
+
+	-- With a dedicated ADS idle the swap is instant and cuts whatever is playing. Without one there is nothing to swap to mid-animation, so only a settled loop is refreshed: a draw/fire/inspect already queued an idle and picks the right loop up itself once it finishes.
+	if not self:HasIronsightsIdle() then
+		if not self:HasMovementAnims() then return end
+		if self:GetNextIdle() != 0 then return end
+	end
+
+	self:SetNextIdle( 0 )
+	self:ResumeIdleLoop()
 end
 
 -- Swaps to the walk/sprint loop once the movement state has held long enough,
