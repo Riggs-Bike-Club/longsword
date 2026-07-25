@@ -52,9 +52,14 @@ function SWEP:HasIronsightsIdle()
 	return self.IronsightsIdleAnim != nil or self.EmptyIronsightsIdleAnim != nil
 end
 
--- Returns true when the weapon defines a dedicated walk/sprint loop to swap to.
+-- Returns true when the weapon defines a dedicated walk/sprint loop to swap to, loaded or empty.
 function SWEP:HasMovementAnims()
-	return self.WalkAnim != nil or self.SprintAnim != nil
+	return self.WalkAnim != nil or self.SprintAnim != nil or self.EmptyWalkAnim != nil or self.EmptySprintAnim != nil
+end
+
+-- Returns true when the weapon defines any empty-clip counterpart to one of its looping animations.
+function SWEP:HasEmptyLoopAnims()
+	return self.EmptyIdleAnim != nil or self.EmptyIronsightsIdleAnim != nil or self.EmptyWalkAnim != nil or self.EmptySprintAnim != nil
 end
 
 -- Classifies the owner's current movement as "sprint", "walk" or "idle".
