@@ -164,7 +164,21 @@ function SWEP:MovementThink()
 	if state == self.LastMoveState then return end
 	if CurTime() < (self.MoveStateChangeTime or 0) then return end
 
-	if self:GetIronsights() then return end
+	if self:GetNextIdle() != 0 then return end
+	if self:GetReloading() or self:GetBursting() then return end
+	if self:GetNextPrimaryFire() > CurTime() then return end
+
+	self:ResumeIdleLoop( true )
+end
+
+-- Swaps the looping animation over when the clip runs dry or is refilled without the movement state changing. The loop is otherwise only re-picked when the player starts moving, aims, or an animation finishes, so a clip topped up by anything else (an admin handing out ammo, a shotgun shell chambered mid-reload) would leave the hands holding a locked-back slide over a full magazine until the next state change.
+function SWEP:AmmoStateThink()
+	if not self:HasEmptyLoopAnims() then return end
+	if self.Inspecting then return end
+
+	if self:IsClipEmpty() == self.LastEmptyState then return end
+
+	-- Only a settled loop is refreshed: a draw, fire or reload animation leaves NextIdle set and resolves the right variant itself once it finishes, syncing the tracker as it does. The mismatch is left standing until then so the swap still happens if none of them ever gets around to it.
 	if self:GetNextIdle() != 0 then return end
 	if self:GetReloading() or self:GetBursting() then return end
 	if self:GetNextPrimaryFire() > CurTime() then return end
