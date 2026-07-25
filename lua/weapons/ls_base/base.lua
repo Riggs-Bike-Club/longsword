@@ -67,9 +67,61 @@ SWEP.EmptyIronsightsIdleAnim = nil
 -- the instant the movement state changes and falls back to the standard idle
 -- when nil. Both accept an activity (ACT_VM_*) or a raw sequence name string.
 -- They never interrupt a draw, fire or reload -- the matching loop is picked up
--- once that animation finishes.
+-- once that animation finishes. Aiming down sights suspends them: the weapon
+-- drops to IronsightsIdleAnim, or to the standard idle when it has none, so the
+-- hands never keep walking or sprinting while the player stands still aimed.
 SWEP.WalkAnim = nil
 SWEP.SprintAnim = nil
+
+-- The standing idle. IdleAnim is the loop the weapon settles into whenever it is
+-- neither moving nor aimed, defaulting to ACT_VM_IDLE.
+SWEP.IdleAnim = nil
+
+-- Empty-clip counterparts to the loops above, for viewmodels that animate the
+-- slide or bolt locked back (idle_empty, walk_empty, sprint_empty). Each is used
+-- in place of its loaded variant for as long as the clip reads 0 and falls back
+-- to that variant when nil, so a weapon only has to declare the empty sequences
+-- its model actually ships. The swap follows the clip rather than the animation
+-- that changed it: firing the last round, finishing a reload or having ammo
+-- handed over all re-pick the loop on the spot.
+SWEP.EmptyIdleAnim = nil
+SWEP.EmptyWalkAnim = nil
+SWEP.EmptySprintAnim = nil
+
+-- Draw animations. DrawAnim is played on deploy (default ACT_VM_DRAW) and
+-- EmptyDrawAnim replaces it while the clip is empty. NoDrawAnim skips both.
+SWEP.DrawAnim = nil
+SWEP.EmptyDrawAnim = nil
+
+-- Holster animations, off by default. Playing one means holding the weapon
+-- switch back until the animation finishes, so weapons opt in with DoHolsterAnim
+-- and the switch goes through the moment it ends. HolsterAnim picks the sequence
+-- and EmptyHolsterAnim replaces it while the clip is empty; with neither set the
+-- switch stays instant. Death, dropping the weapon and switching with nothing to
+-- switch to all bypass the delay.
+SWEP.DoHolsterAnim = false
+SWEP.HolsterAnim = nil
+SWEP.EmptyHolsterAnim = nil
+
+-- Reload animations. ReloadAnimation is the normal one (default ACT_VM_RELOAD);
+-- with DoEmptyReloadAnim set, a reload started on an empty clip plays
+-- EmptyReloadAnimation (default ACT_VM_RELOAD_EMPTY) instead, which is the one
+-- that drops the slide or charges the bolt at the end.
+SWEP.DoEmptyReloadAnim = false
+SWEP.ReloadAnimation = nil
+SWEP.EmptyReloadAnimation = nil
+
+-- The shot that empties the clip. With DoLastFireAnim set it plays a dedicated
+-- animation instead of the normal fire one -- LastFireAnims picks at random from
+-- a list (one per fire variant, matching FireAnims), LastFireAnim is the
+-- single-sequence form, and ACT_VM_PRIMARYATTACK_EMPTY is the fallback.
+SWEP.DoLastFireAnim = false
+SWEP.LastFireAnim = nil
+SWEP.LastFireAnims = nil
+
+-- Animation played when the trigger is pulled on an empty chamber, defaulting to
+-- ACT_VM_DRYFIRE. NoDryFireAnim suppresses it entirely.
+SWEP.DryFireAnim = nil
 
 -- Seconds a new movement state must hold before the loop actually swaps. Stops
 -- velocity hovering near the walk/sprint thresholds from rapidly flipping the
