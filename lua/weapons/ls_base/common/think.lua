@@ -360,10 +360,7 @@ function SWEP:IronsightsThink()
 	if self.Owner:KeyDown(IN_ATTACK2) and self:CanIronsight() and not self:GetIronsights() then
 		if hook.Run("LSOnIronsights", self, true) then return end
 		self:SetIronsights( true )
-		if self:HasIronsightsIdle() and not self:GetReloading() then
-			self:PlayAnim( self:GetIdleAnim() )
-			self:QueueIdle()
-		end
+		self:RefreshIronsightsLoop()
 		if CLIENT and (IsFirstTimePredicted() or game.SinglePlayer()) then
 			if self.IronsightsFrac < 0.01 then
 				self.IronsightsEarly = true
