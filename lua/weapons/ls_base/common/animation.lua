@@ -22,6 +22,35 @@ function SWEP:PlayAnim(act, bKeepCycle)
 	return vmodel:SequenceDuration(seq)
 end
 
+-- True while the weapon carries a magazine and it has run dry. Weapons without a clip (melee, projectile) report -1 and are never considered empty.
+function SWEP:IsClipEmpty()
+	return self:Clip1() == 0
+end
+
+-- Picks between an animation and its empty-clip counterpart. The empty variant is only used when the weapon actually defines one and the clip is dry, so weapons that only set the loaded variant behave exactly as they did before.
+function SWEP:ResolveEmptyAnim(anim, emptyAnim)
+	if emptyAnim and self:IsClipEmpty() then
+		return emptyAnim
+	end
+
+	return anim
+end
+
+-- Returns the draw animation for the current clip state, falling back to ACT_VM_DRAW.
+function SWEP:GetDrawAnim()
+	return self:ResolveEmptyAnim(self.DrawAnim, self.EmptyDrawAnim) or ACT_VM_DRAW
+end
+
+-- Returns the holster animation for the current clip state, or nil when the weapon defines neither variant.
+function SWEP:GetHolsterAnim()
+	return self:ResolveEmptyAnim(self.HolsterAnim, self.EmptyHolsterAnim)
+end
+
+-- Returns the animation played when the trigger is pulled on an empty chamber, falling back to ACT_VM_DRYFIRE.
+function SWEP:GetDryFireAnim()
+	return self.DryFireAnim or ACT_VM_DRYFIRE
+end
+
 function SWEP:PlayAnimWorld(act)
 	local wmodel = self
 	local seq = wmodel:SelectWeightedSequence(act)
