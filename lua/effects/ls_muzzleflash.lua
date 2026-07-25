@@ -6,6 +6,13 @@ local flashes = {
     "muzzleflash_5",
     "muzzleflash_6"
 }
+
+-- Maps SWEP.MuzzleFlashShock to the size magnitude consumed by ls_muzzle_shock.
+local shockSizes = {
+    small = 1,
+    medium = 2,
+    large = 3,
+}
 function EFFECT:Init( data )
 	self.offset = data:GetOrigin() + Vector( 0, 0, 0.2 )
 	self.angles = data:GetAngles()
