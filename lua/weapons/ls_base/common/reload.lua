@@ -47,11 +47,12 @@ function SWEP:Reload()
 
 	self:GetOwner():DoReloadEvent()
 
-	if not self.DoEmptyReloadAnim or self:Clip1() != 0 then
-		self:PlayAnim(self.ReloadAnimation or ACT_VM_RELOAD)
-	else
-		self:PlayAnim(ACT_VM_RELOAD_EMPTY)
+	local anim = self.ReloadAnimation or ACT_VM_RELOAD
+	if self.DoEmptyReloadAnim and self:IsClipEmpty() then
+		anim = self.EmptyReloadAnimation or ACT_VM_RELOAD_EMPTY
 	end
+
+	self:PlayAnim(anim)
 	self:QueueIdle()
 
 	if self.ReloadSound then 
