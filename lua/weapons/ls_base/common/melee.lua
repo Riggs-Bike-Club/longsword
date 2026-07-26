@@ -303,13 +303,13 @@ function SWEP:ClubAttack(damage, range, hullSize)
         local ent = tr.Entity
 
         if IsValid( ent ) then
-            local newDamage = hook.Run( "LongswordCalculateMeleeDamage", owner, self.Primary.Damage, ent )
+            local newDamage = hook.Run( "LongswordCalculateMeleeDamage", owner, damage, ent )
             hook.Run( "LongswordHitEntity", owner, ent )
 
             local dmg = DamageInfo()
             dmg:SetAttacker( owner )
             dmg:SetInflictor( self )
-            dmg:SetDamage( newDamage or self.Primary.Damage )
+            dmg:SetDamage( newDamage or damage )
             dmg:SetDamageType( DMG_CLUB )
             dmg:SetDamagePosition( tr.HitPos )
 
