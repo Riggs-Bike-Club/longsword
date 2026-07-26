@@ -340,7 +340,7 @@ function SWEP:ClubAttack(damage, range, hullSize)
             end
         elseif self.MeleeHitFallback and self:MeleeHitFallback( tr ) then
             return
-        elseif self.Primary.ImpactSoundWorldOnly then
+        elseif !istable( self.ImpactSounds ) and self.Primary.ImpactSoundWorldOnly then
             owner:EmitSound( self.Primary.ImpactSound )
         end
     end
