@@ -1,0 +1,8 @@
+// Stand-in for the Firearms: Source distance-glow variant; mirrors the stock particle_glow_05_additive material.
+"UnlitGeneric"
+{
+	"$basetexture" "particle/particle_glow_05"
+	"$additive" "1"
+	"$vertexcolor" 1
+	"$vertexalpha" "1"
+}

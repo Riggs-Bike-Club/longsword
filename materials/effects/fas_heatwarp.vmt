@@ -1,0 +1,10 @@
+// Stand-in for the Firearms: Source heat distortion material; refracts through the stock HL2 heatwave normal map.
+"Refract"
+{
+	"$normalmap" "sprites/heatwave"
+	"$refractamount" "0.1"
+	"$vertexcolormodulate" 1
+	"$vertexalpha" 1
+	"$nowritez" 1
+	"$translucent" 1
+}
