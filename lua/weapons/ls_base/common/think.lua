@@ -85,6 +85,11 @@ end
 -- its own empty-clip counterpart, so a weapon with walk/sprint/idle_empty
 -- sequences keeps the locked-back slide on screen the whole time it is dry.
 function SWEP:GetIdleAnim()
+	-- A held melee charge owns the loop: any stray idle/movement refresh must hold the charge idle pose, not drop back to walk or standing.
+	if self.Charging and self.MeleeCharge then
+		return self.MeleeCharge.IdleAnim or ACT_VM_ATTACK_CHARGE_IDLE
+	end
+
 	local bIronsights = self:GetIronsights()
 
 	if bIronsights then
