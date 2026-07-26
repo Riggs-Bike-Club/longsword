@@ -46,8 +46,12 @@ function SWEP:GetHolsterAnim()
 	return self:ResolveEmptyAnim(self.HolsterAnim, self.EmptyHolsterAnim)
 end
 
--- Returns the animation played when the trigger is pulled on an empty chamber, falling back to ACT_VM_DRYFIRE.
+-- Returns the animation played when the trigger is pulled on an empty chamber, preferring the ironsighted variant while aimed and falling back to ACT_VM_DRYFIRE.
 function SWEP:GetDryFireAnim()
+	if self:GetIronsights() and self.IronsightsDryFireAnim then
+		return self.IronsightsDryFireAnim
+	end
+
 	return self.DryFireAnim or ACT_VM_DRYFIRE
 end
 

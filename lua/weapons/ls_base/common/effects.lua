@@ -51,29 +51,38 @@ function SWEP:ShouldAnimateFire()
 	return true
 end
 
+-- Returns a random entry from a list, the single-sequence field, or the fallback -- in that order. Lets every fire slot accept either a list (picked at random) or one sequence without each caller repeating the check.
+function SWEP:PickFireAnim(list, single, fallback)
+	if list and #list > 0 then
+		return list[math.random(#list)]
+	end
+
+	return single or fallback
+end
+
 function SWEP:GetFireAnimation()
+	local bEmpty = self.DoLastFireAnim and self:IsClipEmpty()
+
 	if self:GetIronsights() then
-		if istable(self.IronsightsAnimation) then
-			return self.IronsightsAnimation[math.random(#self.IronsightsAnimation)]
+		-- The shot that empties the clip has its own aimed sequence too, so it is preferred before the normal aimed fire.
+		if bEmpty and (self.IronsightsLastFireAnims or self.IronsightsLastFireAnim) then
+			return self:PickFireAnim(self.IronsightsLastFireAnims, self.IronsightsLastFireAnim)
 		end
 
-		return self.IronsightsAnimation or ACT_VM_PRIMARYATTACK_1
+		local iron = self.IronsightsAnimation
+		if istable(iron) then
+			return self:PickFireAnim(iron, nil, ACT_VM_PRIMARYATTACK_1)
+		end
+
+		return iron or ACT_VM_PRIMARYATTACK_1
 	end
 
 	-- The shot that empties the clip: viewmodels that lock the slide back animate it as a separate sequence (one per fire variant, hence the list) rather than as part of the normal fire animation.
-	if self.DoLastFireAnim and self:IsClipEmpty() then
-		if self.LastFireAnims and #self.LastFireAnims > 0 then
-			return self.LastFireAnims[math.random(#self.LastFireAnims)]
-		end
-
-		return self.LastFireAnim or ACT_VM_PRIMARYATTACK_EMPTY
+	if bEmpty then
+		return self:PickFireAnim(self.LastFireAnims, self.LastFireAnim, ACT_VM_PRIMARYATTACK_EMPTY)
 	end
 
-	if self.FireAnims then
-		return self.FireAnims[math.random(#self.FireAnims)]
-	end
-
-	return self.FireAnim or ACT_VM_PRIMARYATTACK
+	return self:PickFireAnim(self.FireAnims, self.FireAnim, ACT_VM_PRIMARYATTACK)
 end
 
 local smoke = Material("sprites/smoke")
@@ -158,6 +167,11 @@ end
 -- are still honoured as a fallback.
 
 function SWEP:ShouldPullback()
+	-- The shot that empties the clip plays a dedicated last-fire sequence that already cocks the action (or locks the bolt open), so a normal pump on top of it would double the motion.
+	if self.DoLastFireAnim and self:IsClipEmpty() then
+		return false
+	end
+
 	if self.Pullback and self.Pullback.Enabled then
 		return true
 	end

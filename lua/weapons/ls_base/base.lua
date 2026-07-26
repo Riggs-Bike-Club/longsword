@@ -114,14 +114,37 @@ SWEP.EmptyReloadAnimation = nil
 -- The shot that empties the clip. With DoLastFireAnim set it plays a dedicated
 -- animation instead of the normal fire one -- LastFireAnims picks at random from
 -- a list (one per fire variant, matching FireAnims), LastFireAnim is the
--- single-sequence form, and ACT_VM_PRIMARYATTACK_EMPTY is the fallback.
+-- single-sequence form, and ACT_VM_PRIMARYATTACK_EMPTY is the fallback. The
+-- Ironsights* forms below are the aimed counterparts, used only when the shot is
+-- animated down the sights (Recoil.DoFireAnim); with none set the aimed
+-- last-shot falls back to the normal aimed fire.
 SWEP.DoLastFireAnim = false
 SWEP.LastFireAnim = nil
 SWEP.LastFireAnims = nil
+SWEP.IronsightsLastFireAnim = nil
+SWEP.IronsightsLastFireAnims = nil
 
 -- Animation played when the trigger is pulled on an empty chamber, defaulting to
--- ACT_VM_DRYFIRE. NoDryFireAnim suppresses it entirely.
+-- ACT_VM_DRYFIRE. IronsightsDryFireAnim replaces it while aimed when set.
+-- NoDryFireAnim suppresses it entirely.
 SWEP.DryFireAnim = nil
+SWEP.IronsightsDryFireAnim = nil
+
+-- Shell-by-shell (shotgun) reload sequences, used when SWEP.Shotgun is set. The
+-- reload runs an opening rack, one insert per shell and a closing rack; each
+-- stage takes a named-sequence or activity override, and the *Empty forms are
+-- swapped in when the tube started empty (bolt locked open). Left nil, the stages
+-- keep the activities the reload used before (ACT_SHOTGUN_RELOAD_START /
+-- ACT_VM_RELOAD / ACT_SHOTGUN_RELOAD_FINISH), so a shotgun with a single reload
+-- set is unaffected.
+SWEP.ShotgunReloadStartAnim = nil
+SWEP.ShotgunReloadStartEmptyAnim = nil
+SWEP.ShotgunReloadInsertAnim = nil
+SWEP.ShotgunReloadEndAnim = nil
+SWEP.ShotgunReloadEndEmptyAnim = nil
+
+-- When the empty-start reload animation loads a round directly into the chamber, set this so that shell is credited as the rack plays -- unlike CanChamberShotgun it does not raise the clip size, for tubes (like the M590) whose ClipSize already counts the chambered round.
+SWEP.ShotgunEmptyChambers = false
 
 -- Seconds a new movement state must hold before the loop actually swaps. Stops
 -- velocity hovering near the walk/sprint thresholds from rapidly flipping the
@@ -214,6 +237,7 @@ function SWEP:ResetValues()
 	self.PendingMoveState = nil
 	self.LastEmptyState = nil
 	self.HolsterAnimEnd = nil
+	self.ReloadStartedEmpty = nil
 
 	self.Inspecting = false
 	self.NextInspect = nil
