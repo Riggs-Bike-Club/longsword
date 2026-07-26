@@ -3,10 +3,10 @@
 local DUST_COLOR = Color( 190, 180, 165 )
 
 local dustMats = {
-    Material( "particle/smokesprites_0001" ),
-    Material( "particle/smokesprites_0002" ),
-    Material( "particle/smokesprites_0003" ),
-    Material( "particle/smokesprites_0004" ),
+    "particle/smokesprites_0001",
+    "particle/smokesprites_0002",
+    "particle/smokesprites_0003",
+    "particle/smokesprites_0004",
 }
 
 -- Tuning per shock size; keyed by the magnitude set in ls_muzzleflash (1 = small, 2 = medium, 3 = large).
