@@ -272,7 +272,13 @@ function SWEP:ClubAttack(damage, range, hullSize)
     if SERVER and tr.Hit then
         hook.Run( "LongswordMeleeHit", owner )
 
-        if self.Primary.ImpactSound and !self.Primary.ImpactSoundWorldOnly then
+        -- The categorised ImpactSounds table, when present, picks by target (player/npc/ragdoll) or surface and plays for every hit; the legacy flat ImpactSound keeps its "world only" toggle for weapons that never opted in.
+        if istable( self.ImpactSounds ) then
+            local snd = self:GetImpactSound( tr )
+            if snd then
+                owner:EmitSound( snd )
+            end
+        elseif self.Primary.ImpactSound and !self.Primary.ImpactSoundWorldOnly then
             owner:EmitSound( self.Primary.ImpactSound )
         end
 
