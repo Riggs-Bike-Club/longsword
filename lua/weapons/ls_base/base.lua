@@ -239,6 +239,10 @@ function SWEP:ResetValues()
 	self.HolsterAnimEnd = nil
 	self.ReloadStartedEmpty = nil
 
+	self.Charging = false
+	self.ChargeIdlePlayed = false
+	self.SecondaryDown = false
+
 	self.Inspecting = false
 	self.NextInspect = nil
 
