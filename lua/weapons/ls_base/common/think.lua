@@ -148,6 +148,7 @@ end
 function SWEP:MovementThink()
 	if not self:HasMovementAnims() then return end
 	if self.Inspecting then return end
+	if self.Charging then return end
 
 	local state = self:GetMoveState()
 
