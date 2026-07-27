@@ -29,16 +29,10 @@ SWEP.ImpactSounds = {
     },
     ragdoll = "Flesh.ImpactHard",
     flesh = "Flesh.ImpactHard",
-    metal = {
-        "SolidMetal.ImpactHard",
-        "MetalVehicle.ImpactHard"
-    },
+    metal = "SolidMetal.ImpactHard",
     grate = "MetalGrate.ImpactHard",
     computer = "Computer.ImpactHard",
-    wood = {
-        "Wood_Solid.ImpactHard",
-        "Wood.ImpactHard"
-    },
+    wood = "Wood_Solid.ImpactHard",
     concrete = "Concrete.ImpactHard",
     glass = "Glass.ImpactHard",
     plastic = "Plastic_Box.ImpactHard",
