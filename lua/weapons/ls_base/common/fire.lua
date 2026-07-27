@@ -90,6 +90,11 @@ function SWEP:PrimaryAttack()
 			if self.HammerDown == true then return end
 			self:PlayAnim(self:GetDryFireAnim())
 			self:QueueIdle()
+
+			if self.EmptySound then
+				self:EmitWeaponSound(self.EmptySound)
+			end
+
 			self.HammerDown = true
 		end
 
