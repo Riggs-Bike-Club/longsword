@@ -1,6 +1,6 @@
 function SWEP:PlayAnim(act, bKeepCycle)
-	local vmodel = self:GetOwner():GetViewModel()
-	if not IsValid(vmodel) then return end
+	local vmodel = self:GetOwnerViewModel()
+	if not vmodel then return end
 
 	-- Named sequences must be resolved on the viewmodel, not on self: sequence indices are per-model, SendViewModelMatchingSequence only accepts the viewmodel's own, and self:LookupSequence() reads the weapon's WORLD model, where viewmodel sequence names ("walk", "sprint", "idle01_is") do not exist. That returned -1 and aborted the call silently, so the swap never happened and whatever was already playing -- a sprint loop, say -- just kept looping.
 	local seq = isstring(act) and vmodel:LookupSequence(act) or vmodel:SelectWeightedSequence(act)
