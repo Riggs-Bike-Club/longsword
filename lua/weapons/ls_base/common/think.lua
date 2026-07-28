@@ -326,25 +326,12 @@ function SWEP:BurstThink()
 end
 
 function SWEP:OnRemove()
-	if self.CustomMaterial then
-		if CLIENT then
-			if not self.Owner.GetViewModel then -- disconnect errors
-				return
-			end
-
-			if not self.Owner == LocalPlayer() then
-				return
-			end
-
-			if not IsValid(self.Owner) then
-				return
-			end
-
-			if not IsValid(self.Owner:GetViewModel()) then
-				return
-			end
-
-			self.Owner:GetViewModel():SetMaterial("")
+	-- The weapon is routinely removed with its owner already gone (a disconnect, a strip on respawn), so the material reset only runs when there is still a local viewmodel wearing it -- and never at the cost of the CustomOnRemove call below, which the old chain of early returns swallowed.
+	if CLIENT and self.CustomMaterial and self:GetOwner() == LocalPlayer() then
+		local vm = self:GetOwnerViewModel()
+		if vm then
+			vm:SetMaterial("")
+			self.CustomMatSetup = nil
 		end
 	end
 
