@@ -323,28 +323,40 @@ function SWEP:GetHolsterSound()
 end
 
 
+-- Resolves the owner's viewmodel, returning nothing whenever the weapon has no player behind it. The engine keeps calling the render, think and lifecycle entry points on a weapon whose owner has gone -- a death, a strip, the tail of a weapon switch -- and every path that reaches straight through GetOwner() for the viewmodel errors on those frames.
+function SWEP:GetOwnerViewModel()
+	local owner = self:GetOwner()
+	if not IsValid(owner) or not owner:IsPlayer() then return end
+
+	local vm = owner:GetViewModel()
+	if not IsValid(vm) then return end
+
+	return vm
+end
+
 function SWEP:Deploy()
 	local ply = self:GetOwner()
 
-	if ply:IsNPC() then
+	if IsValid(ply) and ply:IsNPC() then
 		return self:Remove() -- NPC support has not been added, this avoids possible errors
 	end
-	if self.CustomMaterial then
-		if CLIENT then
-			self.Owner:GetViewModel():SetMaterial(self.CustomMaterial)
-			self.CustomMatSetup = true
-		end
+
+	local vm = self:GetOwnerViewModel()
+
+	if CLIENT and self.CustomMaterial and vm then
+		vm:SetMaterial(self.CustomMaterial)
+		self.CustomMatSetup = true
 	end
 
-	local vm = ply:GetViewModel()
-
-	if self.CustomSubMats then
-		for id, mat in pairs(self.CustomSubMats) do
-			vm:SetSubMaterial(id, mat)
-		end
-	else
-		for id, mat in pairs(vm:GetMaterials()) do
-			vm:SetSubMaterial(id, "")
+	if vm then
+		if self.CustomSubMats then
+			for id, mat in pairs(self.CustomSubMats) do
+				vm:SetSubMaterial(id, mat)
+			end
+		else
+			for id, mat in pairs(vm:GetMaterials()) do
+				vm:SetSubMaterial(id, "")
+			end
 		end
 	end
 
