@@ -1,4 +1,8 @@
 function SWEP:Think()
+	-- Every think below reads the owner's input, movement or viewmodel, and the engine still ticks a weapon on the frame its player goes away (death, a strip, a drop), so bail rather than run any of them against a NULL owner.
+	local owner = self:GetOwner()
+	if not IsValid(owner) or not owner:IsPlayer() then return end
+
 	self:IronsightsThink()
 	self:RecoilThink()
 	self:IdleThink()
