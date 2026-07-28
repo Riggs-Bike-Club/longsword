@@ -377,8 +377,7 @@ function SWEP:Deploy()
 		self:QueueIdle()
 	end
 
-	if self.PlayerSpeedMultiplier then
-		local ply = self:GetOwner()
+	if self.PlayerSpeedMultiplier and IsValid(ply) then
 		local oldSpeed = ply:GetWalkSpeed()
 		ply.lsOldWalkSpeed = oldSpeed
 		ply:SetWalkSpeed(oldSpeed * self.PlayerSpeedMultiplier)
