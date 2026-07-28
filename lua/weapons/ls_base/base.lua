@@ -447,24 +447,21 @@ function SWEP:Holster(w)
 		self.FOV = nil
 	end
 
-	if self.CustomMaterial then
-		if CLIENT then
-			if self.Owner == LocalPlayer() then
-				self.Owner:GetViewModel():SetMaterial("")
-			end
-		end
+	if CLIENT and vm and self.CustomMaterial and owner == LocalPlayer() then
+		vm:SetMaterial("")
+		self.CustomMatSetup = nil
 	end
 
-	if self.CustomSubMats then
+	if vm and self.CustomSubMats then
 		for id, mat in pairs(self.CustomSubMats) do
 			vm:SetSubMaterial(id, "")
 		end
 	end
 
-	if self.PlayerSpeedMultiplier then
-		local oldSpeed = self:GetOwner().lsOldWalkSpeed
-		if oldSpeed != self:GetOwner():GetWalkSpeed() then
-			self:GetOwner():SetWalkSpeed(oldSpeed)
+	if self.PlayerSpeedMultiplier and IsValid(owner) then
+		local oldSpeed = owner.lsOldWalkSpeed
+		if oldSpeed and oldSpeed != owner:GetWalkSpeed() then
+			owner:SetWalkSpeed(oldSpeed)
 		end
 	end
 
