@@ -435,7 +435,9 @@ end
 function SWEP:Holster(w)
 	if not self:HandleHolsterAnim(w) then return false end
 
-	local vm = self:GetOwner():GetViewModel()
+	-- Holster runs on the way out of a weapon the owner may already have lost (death, a strip), so everything below has to survive a NULL owner and a torn-down viewmodel.
+	local owner = self:GetOwner()
+	local vm = self:GetOwnerViewModel()
 
 	self:ResetValues()
 
