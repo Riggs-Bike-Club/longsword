@@ -85,8 +85,8 @@ function SWEP:DrawVMAttachmentScope(attID)
 	if not attData then return end
 
 	local scope = attData.Scope
-	local ply = self:GetOwner()
-	local vm = ply:GetViewModel()
+	local vm = self:GetOwnerViewModel()
+	if not vm then return end
 
 	local att = attData._CSModel
 	if not IsValid(att) then return end
