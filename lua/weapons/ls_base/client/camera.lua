@@ -421,8 +421,8 @@ function SWEP:CalcView(ply, origin, angles, fov)
 end
 
 
-function SWEP:ViewModelDrawn()
-	local vm = self:GetOwner():GetViewModel()
+-- The engine hands the viewmodel it just drew straight to us, so take it from there instead of reaching back through the owner: this fires on the frames where the weapon has already lost its player and GetOwner() is NULL.
+function SWEP:ViewModelDrawn(vm)
 	if not IsValid(vm) then
 		return
 	end
