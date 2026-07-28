@@ -63,5 +63,8 @@ function SWEP:PlayAnimWorld(act)
 end
 
 function SWEP:QueueIdle()
-	self:SetNextIdle( CurTime() + self:GetOwner():GetViewModel():SequenceDuration() + 0.1 )
+	local vmodel = self:GetOwnerViewModel()
+	if not vmodel then return end
+
+	self:SetNextIdle( CurTime() + vmodel:SequenceDuration() + 0.1 )
 end
