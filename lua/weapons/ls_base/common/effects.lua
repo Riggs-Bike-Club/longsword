@@ -220,9 +220,10 @@ end
 function SWEP:DoBulletEjection()
 	if (self.NextBulletEject or 0) > CurTime() then return end
 	self.NextBulletEject = CurTime() + (self.Primary.Delay or 0)
-	local ply = self:GetOwner()
-	local vm = ply:GetViewModel()
-	if not IsValid(vm) then return end
+
+	-- Ejection is deferred by Primary.BulletEjectDelay, so the shot that fired it can easily outlive the owner.
+	local vm = self:GetOwnerViewModel()
+	if not vm then return end
 
 	local att = self.Primary.EjectAttachment
 	local attID = vm:LookupAttachment(att)
