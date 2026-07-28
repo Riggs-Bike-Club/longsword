@@ -133,7 +133,8 @@ function SWEP:DrawVMAttachmentScope(attID)
 end
 
 function SWEP:DrawVMAttachment(attID)
-	local vm = self:GetOwner():GetViewModel()
+	local vm = self:GetOwnerViewModel()
+	if not vm then return end
 
 	local attData = self.Attachments[attID]
 	if not attData then return end
