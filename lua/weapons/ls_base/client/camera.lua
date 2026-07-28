@@ -319,9 +319,10 @@ function SWEP:GetViewModelPosition( pos, ang )
 		self.ViewModelFlip = weapons.Get(self:GetClass()).ViewModelFlip -- original value
 	end
 
-	local vm = self:GetOwner():GetViewModel()
-	if IsFirstTimePredicted() or game.SinglePlayer() then
+	local vm = self:GetOwnerViewModel()
+	if vm and (IsFirstTimePredicted() or game.SinglePlayer()) then
 		local muz = self:LookupAttachment(self.MuzzleAttachment or "muzzle")
+		local att
 		if muz > 0 then
 			att = vm:GetAttachment(muz)
 		else
