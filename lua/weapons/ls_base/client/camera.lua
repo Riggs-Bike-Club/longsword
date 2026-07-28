@@ -1,8 +1,14 @@
 local CurTime = UnPredictedCurTime -- fix VM lag
 
 function SWEP:PreDrawViewModel(vm)
-	if CLIENT and self.CustomMaterial and not self.CustomMatSetup then
-		self:GetOwner():GetViewModel():SetMaterial(self.CustomMaterial)
+	-- A weapon whose owner has gone or died keeps its viewmodel on screen: the engine still draws it, but nothing repositions or animates it any more, so it hangs there as a frozen still of the last live frame. Suppress the draw outright rather than leaving that image behind.
+	local owner = self:GetOwner()
+	if not IsValid(owner) or not owner:IsPlayer() or not owner:Alive() then
+		return true
+	end
+
+	if self.CustomMaterial and not self.CustomMatSetup and IsValid(vm) then
+		vm:SetMaterial(self.CustomMaterial)
 		self.CustomMatSetup = true
 	end
 
