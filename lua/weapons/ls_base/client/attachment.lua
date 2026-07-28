@@ -201,8 +201,8 @@ function SWEP:DrawVMAttachment(attID)
 end
 
 function SWEP:DrawVMElement(data)
-	local vm = self:GetOwner():GetViewModel()
-	if not IsValid(vm) then
+	local vm = self:GetOwnerViewModel()
+	if not vm then
 		return
 	end
 
