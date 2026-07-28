@@ -120,7 +120,7 @@ function SWEP:ShootEffects()
 				ef:SetOrigin(self:GetOwner():GetShootPos())
 				ef:SetStart(self:GetOwner():GetShootPos())
 				ef:SetNormal(self:GetOwner():EyeAngles():Forward())
-				ef:SetEntity(self:GetOwner():GetViewModel())
+				ef:SetEntity(vm)
 				ef:SetAttachment(muz)
 				ef:SetScale(self.IronsightsMuzzleFlashScale or 1)
 
