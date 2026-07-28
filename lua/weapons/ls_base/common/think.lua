@@ -15,7 +15,7 @@ function SWEP:Think()
 	self:SoundThink()
 
 	-- Re-arm the manual (full-clip) inspect only once the reload key is released, so holding reload plays a single inspect instead of restarting it every tick.
-	if not self:GetOwner():KeyDown(IN_RELOAD) then
+	if not owner:KeyDown(IN_RELOAD) then
 		self.InspectArmed = true
 	end
 
