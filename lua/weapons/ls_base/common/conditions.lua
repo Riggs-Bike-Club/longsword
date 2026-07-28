@@ -1,6 +1,10 @@
+-- Nothing is sprinting without an owner to do it, and the engine still asks (crosshair, FOV) on the frames where the weapon has lost its player.
 function SWEP:IsSprinting()
-	return ( self:GetOwner():GetVelocity():Length2D() > self:GetOwner():GetRunSpeed() - 50 )
-		and self:GetOwner():IsOnGround()
+	local owner = self:GetOwner()
+	if not IsValid(owner) then return false end
+
+	return ( owner:GetVelocity():Length2D() > owner:GetRunSpeed() - 50 )
+		and owner:IsOnGround()
 end
 
 function SWEP:CanShoot()
