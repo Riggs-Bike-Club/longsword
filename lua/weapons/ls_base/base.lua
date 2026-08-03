@@ -284,6 +284,18 @@ function SWEP:OnReloaded()
 		end
 	end
 
+	if self.WMElements then
+		for _, element in pairs(self.WMElements) do
+			if IsValid(element._WMModel) then
+				element._WMModel:Remove()
+			end
+		end
+	end
+
+	if IsValid(self.WMElementRoot) then
+		self.WMElementRoot:Remove()
+	end
+
 	for attID, on in pairs(self.EquippedAttachments or {}) do
 		if not on then continue end
 

@@ -335,6 +335,24 @@ function SWEP:OnRemove()
 		end
 	end
 
+	if CLIENT then
+		for _, element in pairs(self.VMElements or {}) do
+			if IsValid(element._CSModel) then
+				element._CSModel:Remove()
+			end
+		end
+
+		for _, element in pairs(self.WMElements or {}) do
+			if IsValid(element._WMModel) then
+				element._WMModel:Remove()
+			end
+		end
+
+		if IsValid(self.WMElementRoot) then
+			self.WMElementRoot:Remove()
+		end
+	end
+
 	if self.CustomOnRemove then
 		self:CustomOnRemove()
 	end
