@@ -23,7 +23,9 @@ function SWEP:DrawWorldModelElements(pos, ang)
 	if not elements then return end
 
 	if not IsValid(self.WMElementRoot) then
-		self.WMElementRoot = ClientsideModel( self:GetWorldModel() )
+		-- self.WorldModel holds the model path string here: only the legacy branch (which these weapons never take) ever reassigns it to a clientside entity.
+		local path = isstring(self.WorldModel) and self.WorldModel or self:GetModel()
+		self.WMElementRoot = ClientsideModel( path )
 		if not IsValid(self.WMElementRoot) then return end
 
 		self.WMElementRoot:SetNoDraw(true)
