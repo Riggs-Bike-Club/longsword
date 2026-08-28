@@ -52,6 +52,10 @@ SWEP.IronsightsSensitivity = 0.8
 SWEP.IronsightsCrosshair = false
 SWEP.scopedIn = SWEP.scopedIn or false
 
+-- The sprint pose. With LoweredPos set the weapon drops out of the shoulder while its owner sprints, refusing to fire and dropping its crosshair until they slow down, and its movement accuracy is measured against walk speed instead of run speed; LoweredAng is the matching rotation and falls back to a generic tilt when only the position is given. Left nil the weapon stays shouldered and fires at a dead run. A TFA port carries these as RunSightsPos / RunSightsAng.
+SWEP.LoweredPos = nil
+SWEP.LoweredAng = nil
+
 -- Idle animations played while iron-sighted. When set, they replace the normal
 -- idle for as long as the weapon is aimed down sights, and are played the moment
 -- the player enters or leaves ironsights (so the swap is instant rather than

@@ -1,18 +1,33 @@
--- Computes the world model's position and angle off the right-hand bone for the TFA/INS2 offset format, matching tfa_gun_base WorldModelOffsetUpdate exactly: translate along the ORIGINAL (unrotated) bone axes by Pos, THEN rotate the angle by Ang (Up, then Right, then Forward). The order is load-bearing -- the Forward ~180 flip means translating after the rotation would mirror the position.
+-- Computes the world model's position and angle off the right-hand bone, matching tfa_gun_base WorldModelOffsetUpdate exactly: translate along the ORIGINAL (unrotated) bone axes by Pos, THEN rotate the angle by Ang (yaw around Up, then pitch around Right, then roll around Forward). The order is load-bearing -- the ~180 roll flip means translating after the rotation would mirror the position. Pos accepts either the TFA table (Up / Right / Forward keys) or a Vector read as (Forward, Right, Up) like the WMElements convention, and Ang either the TFA table or a plain Angle.
 function SWEP:GetTFAWorldModelTransform(bonePos, boneAng)
 	local offset = self.WMOffset
 	local p = offset.Pos
+	local a = offset.Ang
+
+	local posForward, posRight, posUp
+	if isvector(p) then
+		posForward, posRight, posUp = p.x, p.y, p.z
+	else
+		posForward, posRight, posUp = p.Forward or 0, p.Right or 0, p.Up or 0
+	end
+
+	local angYaw, angPitch, angRoll
+	if isangle(a) then
+		angYaw, angPitch, angRoll = a.y, a.p, a.r
+	else
+		a = a or {}
+		angYaw, angPitch, angRoll = a.Up or 0, a.Right or 0, a.Forward or 0
+	end
 
 	local pos = bonePos
-		+ boneAng:Forward() * ( p.Forward or 0 )
-		+ boneAng:Right() * ( p.Right or 0 )
-		+ boneAng:Up() * ( p.Up or 0 )
+		+ boneAng:Forward() * posForward
+		+ boneAng:Right() * posRight
+		+ boneAng:Up() * posUp
 
 	local ang = Angle( boneAng.p, boneAng.y, boneAng.r )
-	local a = offset.Ang or {}
-	ang:RotateAroundAxis( ang:Up(), a.Up or 0 )
-	ang:RotateAroundAxis( ang:Right(), a.Right or 0 )
-	ang:RotateAroundAxis( ang:Forward(), a.Forward or 0 )
+	ang:RotateAroundAxis( ang:Up(), angYaw )
+	ang:RotateAroundAxis( ang:Right(), angPitch )
+	ang:RotateAroundAxis( ang:Forward(), angRoll )
 
 	return pos, ang
 end
@@ -94,12 +109,14 @@ function SWEP:DrawWorldModel( f )
 		return self:DrawModel( f )
 	end
 
-	-- TFA/INS2 format (Pos/Ang given as Up/Right/Forward): drive the weapon entity's OWN render transform off the right-hand bone and draw it, exactly as tfa_gun_base does. Reusing the real entity keeps its skin, bodygroups, submaterials and pose instead of a bare clientside copy.
+	-- Offset format (Pos/Ang, in either the TFA Up/Right/Forward table or plain Vector/Angle form): drive the weapon entity's OWN render transform off the right-hand bone and draw it, exactly as tfa_gun_base does. Reusing the real entity keeps its skin, bodygroups, submaterials and pose instead of a bare clientside copy. SetupBones is load-bearing: without it GetBoneMatrix returns nil on any frame the owner has not been posed yet, the render overrides are skipped, and the weapon silently draws at the engine default -- indistinguishable from the offset having no effect.
 	if offset.Pos then
 		local owner = self:GetOwner()
 		local pos, ang
 
 		if IsValid(owner) then
+			owner:SetupBones()
+
 			local boneid = owner:LookupBone( "ValveBiped.Bip01_R_Hand" )
 			local matrix = boneid and owner:GetBoneMatrix( boneid )
 
