@@ -2,13 +2,19 @@ function SWEP:UsesMeleeAttack()
     return self.LongswordMode == "melee"
 end
 
--- Returns a random swing sequence from HitAnims, or the single HitAnim, falling back to ACT_VM_MISSCENTER.
-function SWEP:GetSwingAnim()
-    if self.HitAnims and #self.HitAnims > 0 then
-        return self.HitAnims[math.random(#self.HitAnims)]
+-- Returns the sequence for a light swing: HitAnims when the swing connected and the weapon defines a set for it, SwingAnims otherwise, falling back to ACT_VM_MISSCENTER. Both fields take an activity, a raw sequence name or a list of either.
+function SWEP:GetSwingAnim(bHit)
+    if bHit then
+        local hitAnim = self:PickAnim( self.HitAnims )
+        if hitAnim then return hitAnim end
     end
 
-    return self.HitAnim or ACT_VM_MISSCENTER
+    return self:PickAnim( self.SwingAnims ) or ACT_VM_MISSCENTER
+end
+
+-- True when this weapon defines on-hit swing sequences (SWEP.HitAnims), so a swing only pays for the extra hull sweep that tells a hit from a miss when there is a second set to pick from.
+function SWEP:UsesHitAnims()
+    return self.HitAnims != nil
 end
 
 -- True when this weapon defines the hold-to-charge heavy attack (SWEP.MeleeCharge.Enabled).
@@ -28,12 +34,13 @@ function SWEP:PrimaryMeleeAttack()
     self:DoMeleeSwing()
 end
 
--- Performs one swing: an optional wind-up delay before the hit, the swing animation and its cooldown. damage/range/hullSize/delay fall back to the Primary values, so the charged swing can hit harder, further and lock the weapon for longer.
+-- Performs one swing: an optional wind-up delay before the hit, the swing animation and its cooldown. damage/range/hullSize/delay fall back to the Primary values, so the charged swing can hit harder, further and lock the weapon for longer. A weapon with HitAnims sweeps the hull once up front to know whether it is about to connect, the way the HL2 crowbar picks its hit sequence; with a Primary.HitDelay that read is taken before the delayed damage trace, so a target that leaves the swing's path in between still gets the hit animation.
 function SWEP:DoMeleeSwing(anim, damage, range, hullSize, delay)
     if self.PrePrimaryAttack then
         self:PrePrimaryAttack()
     end
 
+    local bHit = self:UsesHitAnims() and self:WouldMeleeHit( range, hullSize )
     local hitDelay = self.Primary.HitDelay
     if hitDelay then
         timer.Simple( hitDelay, function()
@@ -49,7 +56,7 @@ function SWEP:DoMeleeSwing(anim, damage, range, hullSize, delay)
 
     self:EmitSound( self.Primary.Sound )
     self:SetNextPrimaryFire( CurTime() + ( delay or self.Primary.Delay ) )
-    self:PlayAnim( anim or self:GetSwingAnim() )
+    self:PlayAnim( anim or self:GetSwingAnim( bHit ) )
     self:GetOwner():SetAnimation( PLAYER_ATTACK1 )
     self:QueueIdle()
 end

@@ -39,10 +39,10 @@ SWEP.ImpactSounds = {
     default = "Default.ImpactHard"
 }
 
--- Light-attack swing sequences. HitAnims is a list (one picked at random each
--- swing); HitAnim is the single-sequence form; both accept an activity or a raw
--- sequence name and fall back to ACT_VM_MISSCENTER.
-SWEP.HitAnim = nil
+-- Light-attack swing sequences: an activity, a raw sequence name, or a list of either (one picked at random each swing). Left nil, the swing falls back to ACT_VM_MISSCENTER.
+SWEP.SwingAnims = nil
+
+-- Swing sequences played instead of SwingAnims when the swing actually connects, in the same activity / sequence name / list forms. Left nil, a hit looks no different from a miss; set it and every light swing sweeps its hull once before the animation is chosen.
 SWEP.HitAnims = nil
 
 -- Shove: a quick right-click tap that plays ShoveAnim and lands a short-range,

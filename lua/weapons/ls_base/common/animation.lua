@@ -27,6 +27,17 @@ function SWEP:IsClipEmpty()
 	return self:Clip1() == 0
 end
 
+-- Resolves an animation field that accepts either a single activity/sequence name or a list of them, picking one at random from a list. Returns nil for an unset field or an empty list, so callers can fall through to their own default.
+function SWEP:PickAnim(anim)
+	if istable(anim) then
+		if #anim == 0 then return nil end
+
+		return anim[math.random(#anim)]
+	end
+
+	return anim
+end
+
 -- Picks between an animation and its empty-clip counterpart. The empty variant is only used when the weapon actually defines one and the clip is dry, so weapons that only set the loaded variant behave exactly as they did before.
 function SWEP:ResolveEmptyAnim(anim, emptyAnim)
 	if emptyAnim and self:IsClipEmpty() then
