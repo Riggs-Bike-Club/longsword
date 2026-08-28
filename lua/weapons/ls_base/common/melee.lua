@@ -245,9 +245,8 @@ function SWEP:GetImpactSound(tr)
     return self:PickImpactSound( sounds.default ) or self.Primary.ImpactSound
 end
 
--- Sweeps a hull in front of the player and applies damage/effects to whatever it hits. damage/range/hullSize override the Primary defaults, letting the charged swing and the shove reuse the same trace with their own reach and power.
-function SWEP:ClubAttack(damage, range, hullSize)
-    damage = damage or self.Primary.Damage
+-- Builds the hull-sweep trace table for a melee attack, so the damage trace and the hit/miss animation read the exact same volume. range/hullSize override the Primary defaults.
+function SWEP:GetMeleeTraceData(range, hullSize)
     range = range or self.Primary.Range or 85
     hullSize = hullSize or self.Primary.HullSize or 6
 
@@ -260,6 +259,28 @@ function SWEP:ClubAttack(damage, range, hullSize)
 
     trace.mins = Vector( -hullSize, -hullSize, -hullSize )
     trace.maxs = Vector( hullSize, hullSize, hullSize )
+
+    return trace
+end
+
+-- Sweeps the melee hull without applying anything, reporting whether the swing would connect so DoMeleeSwing can pick between SwingAnims and HitAnims.
+function SWEP:WouldMeleeHit(range, hullSize)
+    local owner = self:GetOwner()
+    if !IsValid( owner ) then return false end
+
+    owner:LagCompensation( true )
+    local tr = util.TraceHull( self:GetMeleeTraceData( range, hullSize ) )
+    owner:LagCompensation( false )
+
+    return tr.Hit
+end
+
+-- Sweeps a hull in front of the player and applies damage/effects to whatever it hits. damage/range/hullSize override the Primary defaults, letting the charged swing and the shove reuse the same trace with their own reach and power.
+function SWEP:ClubAttack(damage, range, hullSize)
+    damage = damage or self.Primary.Damage
+
+    local owner = self:GetOwner()
+    local trace = self:GetMeleeTraceData( range, hullSize )
 
     owner:LagCompensation( true )
     local tr = util.TraceHull( trace )
