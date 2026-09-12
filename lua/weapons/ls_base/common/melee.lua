@@ -347,6 +347,10 @@ function SWEP:ClubAttack(damage, range, hullSize)
 
             ent:DispatchTraceAttack( dmg, trace.start, trace.endpos )
 
+            if self.OnMeleeHit then
+                self:OnMeleeHit( tr, dmg )
+            end
+
             if ent:IsPlayer() then
                 if self.Primary.FlashTime then
                     ent:ScreenFade( SCREENFADE.IN, self.Primary.FlashColour or color_white, self.Primary.FlashTime, 0 )
