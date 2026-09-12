@@ -2,6 +2,30 @@ AddCSLuaFile()
 
 SWEP.Base = "ls_base"
 SWEP.LongswordMode = "melee"
+SWEP.CSMuzzleFlashes = false
+
+local FIREARM_ANIMATION_EVENTS = {
+    [20] = true,
+    [21] = true,
+    [5001] = true,
+    [5003] = true,
+    [5011] = true,
+    [5021] = true,
+    [5031] = true,
+    [6001] = true
+}
+
+--- Suppresses model-authored muzzle flashes and shell ejection while preserving melee sounds and other animation events.
+---@realm client
+---@param pos Vector
+---@param ang Angle
+---@param event number
+---@param options string
+---@param source Entity
+---@return boolean|nil
+function SWEP:FireAnimationEvent(pos, ang, event, options, source)
+    return FIREARM_ANIMATION_EVENTS[event]
+end
 
 SWEP.Primary.Ammo = "none"
 SWEP.Primary.Automatic = false
