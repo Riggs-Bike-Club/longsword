@@ -7,6 +7,7 @@ SWEP.CSMuzzleFlashes = false
 local FIREARM_ANIMATION_EVENTS = {
     [20] = true,
     [21] = true,
+    [22] = true,
     [5001] = true,
     [5003] = true,
     [5011] = true,
