@@ -378,7 +378,7 @@ function SWEP:IronsightsThink()
 		self:SetIronsights( true )
 		self:RefreshIronsightsLoop()
 		if CLIENT and (IsFirstTimePredicted() or game.SinglePlayer()) then
-			if self.IronsightsFrac < 0.01 then
+			if (self.IronsightsFrac or 0) < 0.01 then
 				self.IronsightsEarly = true
 			else
 				self.IronsightsEarly = false
@@ -391,7 +391,7 @@ function SWEP:IronsightsThink()
 		self:RefreshIronsightsLoop()
 
 		if CLIENT and (IsFirstTimePredicted() or game.SinglePlayer()) then
-			if self.IronsightsFrac < 0.93 then
+			if (self.IronsightsFrac or 0) < 0.93 then
 				self.IronsightsEarly = true
 			else
 				self.IronsightsEarly = false
