@@ -100,6 +100,15 @@ function SWEP:ShootEffects()
 	self:PlayFireSound()
 	local muz = vm:LookupAttachment(self.MuzzleAttachment or "muzzle")
 
+    if self.MuzzleEffect and IsFirstTimePredicted() then
+        local effect = EffectData()
+        effect:SetEntity(self)
+        effect:SetOrigin(ply:GetShootPos())
+        effect:SetNormal(ply:GetAimVector())
+        effect:SetAttachment(muz)
+        util.Effect(self.MuzzleEffect, effect, true, false)
+    end
+
 	if CLIENT then
 		self.BlurFraction = 1
 		if self:ShouldResetCustomRecoil() and (game.SinglePlayer() or IsFirstTimePredicted()) then
@@ -112,7 +121,7 @@ function SWEP:ShootEffects()
 
 		local isThirdperson = ply:ShouldDrawLocalPlayer()
 
-		if not isThirdperson then
+		if not isThirdperson and not self.MuzzleEffect then
 			local posang = vm:GetAttachment(muz)
 
 			if posang then
@@ -140,7 +149,9 @@ function SWEP:ShootEffects()
 		end
 	end
 
-	self:GetOwner():MuzzleFlash()
+    if not self.MuzzleEffect then
+        self:GetOwner():MuzzleFlash()
+    end
 	self:PlayAnimWorld(ACT_VM_PRIMARYATTACK)
 	self:GetOwner():SetAnimation(PLAYER_ATTACK1)
 

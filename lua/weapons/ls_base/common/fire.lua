@@ -25,6 +25,12 @@ function SWEP:ShootBullet(damage, num_bullets, aimcone)
 		end
 	end
 
+    if self.Primary.DamageType then
+        bullet.Callback = function(attacker, trace, damageInfo)
+            damageInfo:SetDamageType(self.Primary.DamageType)
+        end
+    end
+
 	self:GetOwner():FireBullets(bullet)
 
 	self:ShootEffects()
