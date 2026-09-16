@@ -67,6 +67,12 @@ SWEP.ImpactSounds = {
 -- Light-attack swing sequences: an activity, a raw sequence name, or a list of either (one picked at random each swing). Left nil, the swing falls back to ACT_VM_MISSCENTER.
 SWEP.SwingAnims = nil
 
+--- Optional timing overrides keyed by the selected SwingAnims/HitAnims sequence or activity, with Delay, HitDelay and SoundDelay in seconds.
+SWEP.SwingTimings = nil
+
+--- Optional delay for server-owned swing audio when the animation has no sound event; an empty Primary.Sound leaves audio to the model.
+SWEP.Primary.SoundDelay = nil
+
 -- Swing sequences played instead of SwingAnims when the swing actually connects, in the same activity / sequence name / list forms. Left nil, a hit looks no different from a miss; set it and every light swing sweeps its hull once before the animation is chosen.
 SWEP.HitAnims = nil
 
@@ -103,3 +109,4 @@ SWEP.MeleeCharge.RangeMultiplier = 1
 SWEP.MeleeCharge.HullSize = nil    -- falls back to Primary.HullSize
 SWEP.MeleeCharge.HitDelay = nil    -- wind-up before the hit; falls back to Primary.HitDelay
 SWEP.MeleeCharge.Sound = nil       -- falls back to Primary.Sound
+SWEP.MeleeCharge.SoundDelay = nil

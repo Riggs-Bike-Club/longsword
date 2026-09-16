@@ -2,14 +2,25 @@ function SWEP:UsesMeleeAttack()
     return self.LongswordMode == "melee"
 end
 
+--- Selects the same swing variant in both predicted realms so its animation and hit timing agree.
+---@param anim string|number|table|nil
+---@return string|number|nil
+function SWEP:PickMeleeAnim(anim)
+    if !istable( anim ) then return anim end
+    if #anim == 0 then return nil end
+
+    local index = math.Clamp( math.floor( util.SharedRandom( "longsword.melee.animation", 1, #anim + 1 ) ), 1, #anim )
+    return anim[index]
+end
+
 -- Returns the sequence for a light swing: HitAnims when the swing connected and the weapon defines a set for it, SwingAnims otherwise, falling back to ACT_VM_MISSCENTER. Both fields take an activity, a raw sequence name or a list of either.
 function SWEP:GetSwingAnim(bHit)
     if bHit then
-        local hitAnim = self:PickAnim( self.HitAnims )
+        local hitAnim = self:PickMeleeAnim( self.HitAnims )
         if hitAnim then return hitAnim end
     end
 
-    return self:PickAnim( self.SwingAnims ) or ACT_VM_MISSCENTER
+    return self:PickMeleeAnim( self.SwingAnims ) or ACT_VM_MISSCENTER
 end
 
 -- True when this weapon defines on-hit swing sequences (SWEP.HitAnims), so a swing only pays for the extra hull sweep that tells a hit from a miss when there is a second set to pick from.
@@ -34,14 +45,17 @@ function SWEP:PrimaryMeleeAttack()
     self:DoMeleeSwing()
 end
 
--- Performs one swing: an optional wind-up delay before the hit, the swing animation and its cooldown. damage/range/hullSize/delay fall back to the Primary values, so the charged swing can hit harder, further and lock the weapon for longer. A weapon with HitAnims sweeps the hull once up front to know whether it is about to connect, the way the HL2 crowbar picks its hit sequence; with a Primary.HitDelay that read is taken before the delayed damage trace, so a target that leaves the swing's path in between still gets the hit animation.
+--- Performs a light swing using the selected animation's SwingTimings overrides, falling back to Primary timing; an explicit delay takes precedence over both.
 function SWEP:DoMeleeSwing(anim, damage, range, hullSize, delay)
     if self.PrePrimaryAttack then
         self:PrePrimaryAttack()
     end
 
     local bHit = self:UsesHitAnims() and self:WouldMeleeHit( range, hullSize )
-    local hitDelay = self.Primary.HitDelay
+    anim = anim or self:GetSwingAnim( bHit )
+
+    local timing = self.SwingTimings and self.SwingTimings[anim] or {}
+    local hitDelay = timing.HitDelay or self.Primary.HitDelay
     if hitDelay then
         timer.Simple( hitDelay, function()
             if !IsValid( self ) or !IsValid( self:GetOwner() ) then return end
@@ -54,11 +68,33 @@ function SWEP:DoMeleeSwing(anim, damage, range, hullSize, delay)
         self:ViewPunch()
     end
 
-    self:EmitSound( self.Primary.Sound )
-    self:SetNextPrimaryFire( CurTime() + ( delay or self.Primary.Delay ) )
-    self:PlayAnim( anim or self:GetSwingAnim( bHit ) )
+    self:EmitMeleeSwingSound( self.Primary.Sound, timing.SoundDelay or self.Primary.SoundDelay )
+    self:SetNextPrimaryFire( CurTime() + ( delay or timing.Delay or self.Primary.Delay ) )
+    self:PlayAnim( anim )
     self:GetOwner():SetAnimation( PLAYER_ATTACK1 )
     self:QueueIdle()
+end
+
+--- Plays a swing sound immediately or schedules server-owned audio for animations without embedded sound events.
+---@param soundName string|nil
+---@param delay number|nil
+function SWEP:EmitMeleeSwingSound(soundName, delay)
+    if !soundName or soundName == "" then return end
+
+    if !delay or delay <= 0 then
+        self:EmitSound( soundName )
+        return
+    end
+
+    if !SERVER then return end
+
+    local owner = self:GetOwner()
+    timer.Simple( delay, function()
+        if !IsValid( self ) or !IsValid( owner ) then return end
+        if self:GetOwner() != owner or owner:GetActiveWeapon() != self or !owner:Alive() then return end
+
+        self:EmitSound( soundName )
+    end )
 end
 
 -- Right-click drives both the shove (tap) and the charged heavy (hold): the engine only calls SecondaryAttack on the press, so the hold/release edges are read here off IN_ATTACK2. Melee weapons never ironsight (CanIronsight is false), so the key is free.
@@ -167,7 +203,7 @@ function SWEP:ReleaseMeleeCharge(held)
         self:ViewPunch()
     end )
 
-    self:EmitSound( charge.Sound or self.Primary.Sound )
+    self:EmitMeleeSwingSound( charge.Sound or self.Primary.Sound, charge.SoundDelay or self.Primary.SoundDelay )
 
     local dur = self:PlayAnim( charge.EndAnim or ACT_VM_ATTACK_CHARGE_END ) or 0
     self:GetOwner():SetAnimation( PLAYER_ATTACK1 )
