@@ -4,6 +4,7 @@ function SWEP:ViewPunch()
 	local i = 3 * self.Primary.Recoil
 
 	local offset = Angle(math.random(0, -i * 0.9), math.random(-i * 0.25, i * 0.25))
+	hook.Run("LongswordRecoil", self, offset)
 
 	self:GetOwner():ViewPunch(offset)
 	if IsFirstTimePredicted() and ( CLIENT or game.SinglePlayer() ) then
