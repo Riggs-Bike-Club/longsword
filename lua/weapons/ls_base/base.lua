@@ -97,6 +97,9 @@ SWEP.EmptySprintAnim = nil
 SWEP.DrawAnim = nil
 SWEP.EmptyDrawAnim = nil
 
+--- Maximum firing delay after drawing; the draw animation continues until another action interrupts it.
+SWEP.DrawDelay = 0.25
+
 -- Holster animations, off by default. Playing one means holding the weapon
 -- switch back until the animation finishes, so weapons opt in with DoHolsterAnim
 -- and the switch goes through the moment it ends. HolsterAnim picks the sequence
@@ -150,9 +153,7 @@ SWEP.ShotgunReloadEndEmptyAnim = nil
 -- When the empty-start reload animation loads a round directly into the chamber, set this so that shell is credited as the rack plays -- unlike CanChamberShotgun it does not raise the clip size, for tubes (like the M590) whose ClipSize already counts the chambered round.
 SWEP.ShotgunEmptyChambers = false
 
--- Seconds a new movement state must hold before the loop actually swaps. Stops
--- velocity hovering near the walk/sprint thresholds from rapidly flipping the
--- viewmodel and stuttering between frames.
+--- Seconds a new movement state must hold before the loop swaps; leaving sprint skips this delay so the ready pose returns immediately.
 SWEP.MoveAnimDebounce = 0.1
 
 -- How much of the procedural camera bob/roll to keep when the weapon has its own
@@ -389,7 +390,7 @@ function SWEP:Deploy()
 		-- PlayAnim returns nil for a viewmodel that lacks the draw sequence (e.g. the first aid kit has no ACT_VM_DRAW), so fall back to 0 to avoid arithmetic on nil.
 		local dur = self:PlayAnim(self:GetDrawAnim()) or 0
 
-		self:SetNextPrimaryFire(CurTime() + dur)
+        self:SetNextPrimaryFire( math.max( self:GetNextPrimaryFire(), CurTime() + self:GetDrawDelay( dur ) ) )
 		self:QueueIdle()
 	end
 

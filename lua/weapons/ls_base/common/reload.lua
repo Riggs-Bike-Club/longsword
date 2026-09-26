@@ -8,23 +8,15 @@ function SWEP:GetInspectAnim()
 	return self.InspectAnimation
 end
 
+--- Starts one interruptible inspect per reload press without locking firing for the animation duration.
 function SWEP:Inspect()
-	-- Reload() is called every tick while the key is held, so gate on InspectArmed (re-armed in Think only once reload is released) to keep holding from re-triggering, plus a cooldown so rapid re-pressing can't restart it mid-animation.
-	if not self.InspectArmed then return end
-	if (self.NextInspectAllowed or 0) > CurTime() then return end
+    if ( !self.InspectArmed or !self:CanInspect() ) then return end
+    if ( ( self.NextInspectAllowed or 0 ) > CurTime() ) then return end
 
-	local anim = self:GetInspectAnim()
-	if not anim then return end
+    self.InspectArmed = false
 
-	self.InspectArmed = false
-
-	local dur = self:PlayAnim(anim) or 0
-	if dur > 0 then
-		self:SetNextPrimaryFire(CurTime() + dur)
-		self.NextInspectAllowed = CurTime() + dur + (self.InspectCooldown or 0)
-	end
-
-	self:QueueIdle()
+    local duration = self:DoInspect() or 0
+    self.NextInspectAllowed = CurTime() + duration + ( self.InspectCooldown or 0 )
 end
 
 function SWEP:Reload()

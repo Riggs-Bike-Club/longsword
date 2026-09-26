@@ -1,10 +1,12 @@
--- Nothing is sprinting without an owner to do it, and the engine still asks (crosshair, FOV) on the frames where the weapon has lost its player.
+--- Requires sprint input as well as movement so releasing sprint immediately frees weapon actions.
+---@return boolean bSprinting
 function SWEP:IsSprinting()
-	local owner = self:GetOwner()
-	if not IsValid(owner) then return false end
+    local owner = self:GetOwner()
+    if ( !IsValid( owner ) ) then return false end
+    if ( !owner:KeyDown( IN_SPEED ) or owner:KeyDown( IN_WALK ) or owner:Crouching() ) then return false end
 
-	return ( owner:GetVelocity():Length2D() > owner:GetRunSpeed() - 50 )
-		and owner:IsOnGround()
+    return owner:GetVelocity():Length2D() > owner:GetRunSpeed() - 50
+        and owner:IsOnGround()
 end
 
 function SWEP:CanShoot()

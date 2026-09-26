@@ -12,6 +12,8 @@ function SWEP:PlayAnim(act, bKeepCycle)
 	-- Carry the current normalised cycle across so looping locomotion anims (idle/walk/sprint) blend by phase instead of snapping back to frame 0.
 	local cycle = bKeepCycle and vmodel:GetCycle() or nil
 
+    self.Inspecting = false
+
 	vmodel:ResetSequenceInfo()
 	vmodel:SendViewModelMatchingSequence(seq)
 
@@ -52,6 +54,13 @@ function SWEP:GetDrawAnim()
 	return self:ResolveEmptyAnim(self.DrawAnim, self.EmptyDrawAnim) or ACT_VM_DRAW
 end
 
+--- Caps draw recovery independently of the cosmetic animation without extending short sequences.
+---@param duration number Draw sequence duration in seconds.
+---@return number delay Seconds before the weapon can fire.
+function SWEP:GetDrawDelay(duration)
+    return math.min( duration, math.max( self.DrawDelay or 0.25, 0 ) )
+end
+
 -- Returns the holster animation for the current clip state, or nil when the weapon defines neither variant.
 function SWEP:GetHolsterAnim()
 	return self:ResolveEmptyAnim(self.HolsterAnim, self.EmptyHolsterAnim)
@@ -73,9 +82,10 @@ function SWEP:PlayAnimWorld(act)
 	self:ResetSequence(seq)
 end
 
+--- Resumes the current idle or movement loop as soon as the active animation ends.
 function SWEP:QueueIdle()
-	local vmodel = self:GetOwnerViewModel()
-	if not vmodel then return end
+    local viewModel = self:GetOwnerViewModel()
+    if ( !viewModel ) then return end
 
-	self:SetNextIdle( CurTime() + vmodel:SequenceDuration() + 0.1 )
+    self:SetNextIdle( CurTime() + viewModel:SequenceDuration() )
 end

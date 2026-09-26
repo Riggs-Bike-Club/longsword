@@ -146,9 +146,7 @@ function SWEP:RefreshIronsightsLoop()
 	self:ResumeIdleLoop()
 end
 
--- Swaps to the walk/sprint loop once the movement state has held long enough,
--- but only while settled into the idle loop -- draw/fire/reload animations leave
--- NextIdle set and pick the right loop themselves via GetIdleAnim() once done.
+--- Swaps settled movement loops after debounce, except sprint exits which respond immediately; active action animations still finish normally.
 function SWEP:MovementThink()
 	if not self:HasMovementAnims() then return end
 	if self.Inspecting then return end
@@ -174,7 +172,7 @@ function SWEP:MovementThink()
 	end
 
 	if state == self.LastMoveState then return end
-	if CurTime() < (self.MoveStateChangeTime or 0) then return end
+    if ( self.LastMoveState != "sprint" and CurTime() < ( self.MoveStateChangeTime or 0 ) ) then return end
 
 	if self:GetNextIdle() != 0 then return end
 	if self:GetReloading() or self:GetBursting() then return end
@@ -205,6 +203,7 @@ function SWEP:CanInspect()
 
 	if self:GetIronsights() then return false end
 	if self:GetReloading() or self:GetBursting() then return false end
+    if ( self:GetReloadTime() > CurTime() or self.HolsterAnimEnd ) then return false end
 	if self:GetNextPrimaryFire() > CurTime() then return false end
 	if self:GetNextIdle() != 0 then return false end
 	if self:GetMoveState() != "idle" then return false end
@@ -219,7 +218,8 @@ function SWEP:ScheduleInspect()
 	self.NextInspect = CurTime() + math.Rand( self.InspectMinDelay or 14, self.InspectMaxDelay or 35 )
 end
 
--- Plays a random inspect animation and starts tracking it so it can end or cancel.
+--- Plays an interruptible inspect and returns its duration without changing attack cooldowns.
+---@return number|nil duration Animation duration in seconds.
 function SWEP:DoInspect()
 	local anim = self:GetInspectAnim()
 	if not anim then
@@ -240,51 +240,38 @@ function SWEP:DoInspect()
 	if self.InspectSound then
 		self:EmitWeaponSound( self.InspectSound )
 	end
+
+    return dur
 end
 
--- Server-authoritative random idle inspects: while the weapon sits idle it occasionally plays one of its inspect animations, replicated to the client via PlayAnim, and cancelled the instant the owner shoots, aims down sights or starts moving.
+--- Cancels manual and automatic inspects on input in both realms; only the server schedules automatic inspects.
 function SWEP:InspectThink()
-	if CLIENT then return end
-	if not self.AutoInspect then return end
+    if ( self.Inspecting ) then
+        local owner = self:GetOwner()
+        local bAction = IsValid( owner ) and ( owner:KeyDown( IN_ATTACK ) or owner:KeyDown( IN_ATTACK2 ) or owner:KeyDown( IN_USE ) )
+        local bInterrupted = bAction or self:GetIronsights() or self:GetMoveState() != "idle"
 
-	if self.Inspecting then
-		local owner = self:GetOwner()
-		local bShooting = IsValid(owner) and owner:KeyDown(IN_ATTACK)
-		local bInterrupted = self:GetIronsights() or self:GetMoveState() != "idle"
+        if ( bInterrupted or CurTime() >= self.InspectEndTime ) then
+            self:ScheduleInspect()
 
-		if bShooting or bInterrupted then
-			self:ScheduleInspect()
+            if ( self:GetNextIdle() == 0 and !self:GetReloading() ) then
+                self:ResumeIdleLoop()
+            end
+        end
 
-			-- Shooting plays its own fire animation; for ADS/movement we restore
-			-- the correct loop ourselves so the inspect does not linger.
-			if bInterrupted then
-				self:ResumeIdleLoop()
-			end
+        return
+    end
 
-			return
-		end
+    if ( CLIENT or !self.AutoInspect ) then return end
 
-		if CurTime() >= self.InspectEndTime then
-			self:ResumeIdleLoop()
-			self:ScheduleInspect()
-		end
+    if ( !self:CanInspect() or !self.NextInspect ) then
+        self:ScheduleInspect()
+        return
+    end
 
-		return
-	end
+    if ( CurTime() < self.NextInspect ) then return end
 
-	if not self:CanInspect() then
-		self:ScheduleInspect()
-		return
-	end
-
-	if not self.NextInspect then
-		self:ScheduleInspect()
-		return
-	end
-
-	if CurTime() < self.NextInspect then return end
-
-	self:DoInspect()
+    self:DoInspect()
 end
 
 function SWEP:IdleThink()
