@@ -188,6 +188,7 @@ function SWEP:DoTPIK()
     local owner = self:GetOwner()
     owner:InvalidateBoneCache()
     owner:SetupBones()
+    owner.longswordHeadAimApplied = self:ApplyHeadAim(true) or nil
     local _, anchor = GetBone(owner, self.TPIKAnchor or "ValveBiped.Bip01_R_Hand")
     if ( !anchor ) then return end
     local model = self:GetTPIKModel()
@@ -225,19 +226,25 @@ function SWEP:DrawTPIKWorldModel()
 end
 
 --- Aligns a configured weapon owner's eyes with their aim while preserving the model's head-bone axes.
-function SWEP:ApplyHeadAim()
+function SWEP:ApplyHeadAim(bBonesReady)
     local owner = self:GetOwner()
     if ( !self.HeadTracksAim or !IsValid(owner) or !owner:Alive() or owner:GetActiveWeapon() != self ) then return false end
     if ( owner:IsPlayingTaunt() or (owner.ResolveForcedSequence and owner:ResolveForcedSequence()) ) then return false end
     if ( EyePos():DistToSqr(owner:GetPos()) > distance:GetFloat() ^ 2 ) then return false end
-    if ( self.tpikFrame != FrameNumber() ) then
+    if ( !bBonesReady ) then
         owner:InvalidateBoneCache()
         owner:SetupBones()
     end
     local head, matrix = GetBone(owner, "ValveBiped.Bip01_Head1")
-    local attachment = owner:LookupAttachment("eyes")
-    local eyes = attachment > 0 and owner:GetAttachment(attachment)
-    if ( !matrix or !eyes ) then return false end
+    if ( !matrix ) then return false end
+    if ( self.headAimModel != owner:GetModel() or !self.headAimRelative ) then
+        local attachment = owner:LookupAttachment("eyes")
+        local eyes = attachment > 0 and owner:GetAttachment(attachment)
+        if ( !eyes ) then return false end
+        local _, relative = WorldToLocal(vector_origin, matrix:GetAngles(), vector_origin, eyes.Ang)
+        self.headAimRelative = relative
+        self.headAimModel = owner:GetModel()
+    end
 
     local aim = owner:EyeAngles()
     local body = owner:GetRenderAngles()
@@ -245,8 +252,7 @@ function SWEP:ApplyHeadAim()
     local pitchLimit = self.HeadAimPitchLimit or 60
     local target = Angle(math.Clamp(math.NormalizeAngle(aim.p), -pitchLimit, pitchLimit),
         body.y + math.Clamp(math.AngleDifference(aim.y, body.y), -yawLimit, yawLimit), 0)
-    local _, relative = WorldToLocal(vector_origin, matrix:GetAngles(), vector_origin, eyes.Ang)
-    local _, rotation = LocalToWorld(vector_origin, relative, vector_origin, target)
+    local _, rotation = LocalToWorld(vector_origin, self.headAimRelative, vector_origin, target)
     local pose = Matrix(matrix)
     pose:SetAngles(rotation)
     MoveBone(owner, head, pose)
@@ -256,13 +262,15 @@ end
 --- Updates supported active weapons before their owners render, including mirror and depth passes.
 local function PrePlayerDraw(owner)
     local weapon = owner:GetActiveWeapon()
-    if ( owner.longswordHeadAimApplied ) then
+    if ( owner.longswordHeadAimApplied and (!IsValid(weapon) or !weapon.HeadTracksAim) ) then
         owner:InvalidateBoneCache()
-        owner.longswordHeadAimApplied = nil
     end
+    owner.longswordHeadAimApplied = nil
     if ( IsValid(weapon) and weapon.IsLongsword and weapon.DoTPIK ) then
         weapon:DoTPIK()
-        owner.longswordHeadAimApplied = weapon:ApplyHeadAim() or nil
+        if ( !owner.longswordHeadAimApplied and weapon.tpikFrame != FrameNumber() ) then
+            owner.longswordHeadAimApplied = weapon:ApplyHeadAim() or nil
+        end
     end
 end
 
