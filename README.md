@@ -257,3 +257,20 @@ are not imported. Configure and check offsets for each model and player rig.
 Run the standard Lua regression scripts for replicated animation state. Run
 `tests/tpik.lua` in the Garry's Mod client Lua realm for the native Vector solver
 checks; it does not run in standalone Lua 5.4.
+
+Raised and lowered weapons can use separate absolute offsets. The replicated
+framework `Player:IsWeaponRaised()` state selects the target when available,
+with `GetLowered()` as the standalone fallback. Transitions take `TPIKTransitionTime`
+seconds (default `0.2`, or `0` to snap). Sprinting alone does not select lowered.
+
+```lua
+SWEP.TPIKOffsets = {
+    raised = {Pos = Vector(-5, 10, -5), Ang = Angle(20, 0, 150), Scale = 1},
+    lowered = {Pos = Vector(-8.3, 4, -6), Ang = Angle(-7, 0, 180), Scale = 1},
+}
+SWEP.TPIKTransitionTime = 0.2
+```
+
+`TPIKOffset` remains the fallback for existing weapons and missing raised fields.
+Missing lowered fields inherit the raised values. The HMG's existing tuned offset
+is its raised state; adjust `TPIKOffsets.lowered` independently.

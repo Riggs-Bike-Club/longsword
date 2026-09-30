@@ -110,6 +110,9 @@ function SWEP:RemoveTPIKModel()
     if ( IsValid(self.tpikModel) ) then self.tpikModel:Remove() end
     self.tpikModel = nil
     self.tpikFrame = nil
+    self.tpikLoweredAmount = nil
+    self.tpikOffsetFrame = nil
+    self.tpikOffsetTime = nil
     models[self] = nil
 end
 
@@ -127,11 +130,46 @@ function SWEP:GetTPIKModel()
     return self.tpikModel
 end
 
+--- Uses the framework's replicated raise state when available, otherwise Longsword's standalone lowering state.
+function SWEP:IsTPIKLowered()
+    local owner = self:GetOwner()
+    if ( IsValid(owner) and isfunction(owner.IsWeaponRaised) ) then
+        return !owner:IsWeaponRaised()
+    end
+    return self:GetLowered()
+end
+
+--- Resolves raised and lowered offsets with legacy per-field fallbacks and one transition update per frame.
+function SWEP:GetTPIKOffset()
+    local fallback = self.TPIKOffset or {}
+    local states = self.TPIKOffsets or {}
+    local raised = states.raised or fallback
+    local lowered = states.lowered or raised
+    local target = self:IsTPIKLowered() and 1 or 0
+    local now = RealTime()
+    if ( self.tpikOffsetFrame != FrameNumber() ) then
+        local duration = self.TPIKTransitionTime or 0.2
+        if ( self.tpikLoweredAmount == nil or duration <= 0 ) then
+            self.tpikLoweredAmount = target
+        else
+            self.tpikLoweredAmount = math.Approach(self.tpikLoweredAmount, target, math.max(now - (self.tpikOffsetTime or now), 0) / duration)
+        end
+        self.tpikOffsetTime = now
+        self.tpikOffsetFrame = FrameNumber()
+    end
+
+    local amount = self.tpikLoweredAmount
+    local position = raised.Pos or fallback.Pos or vector_origin
+    local angle = raised.Ang or fallback.Ang or angle_zero
+    local scale = raised.Scale or fallback.Scale or 1
+    return LerpVector(amount, position, lowered.Pos or position),
+        LerpAngle(amount, angle, lowered.Ang or angle),
+        Lerp(amount, scale, lowered.Scale or scale)
+end
+
 --- Positions the animated model using ARC9's right-hand offset axes and rotation order.
 function SWEP:PositionTPIKModel(model, anchor)
-    local offset = self.TPIKOffset or {}
-    local position = offset.Pos or vector_origin
-    local rotation = offset.Ang or angle_zero
+    local position, rotation, scale = self:GetTPIKOffset()
     local angle = anchor:GetAngles()
     local forward, right, up = angle:Forward(), angle:Right(), angle:Up()
     local origin = anchor:GetTranslation() + forward * position.x + right * position.y + up * position.z
@@ -140,7 +178,7 @@ function SWEP:PositionTPIKModel(model, anchor)
     angle:RotateAroundAxis(up, rotation.y)
     model:SetPos(origin)
     model:SetAngles(angle)
-    model:SetModelScale(offset.Scale or 1, 0)
+    model:SetModelScale(scale, 0)
 end
 
 --- Evaluates replicated animation timing and poses hands before the player is drawn.
