@@ -274,3 +274,11 @@ SWEP.TPIKTransitionTime = 0.2
 `TPIKOffset` remains the fallback for existing weapons and missing raised fields.
 Missing lowered fields inherit the raised values. The HMG's existing tuned offset
 is its raised state; adjust `TPIKOffsets.lowered` independently.
+
+`SWEP.HeadTracksAim = true` optionally aligns the player's head with their eye
+angles, independently of the TPIK client toggle. The HMG enables this to correct
+its player animation's sideways/downward head pose. It requires the standard
+ValveBiped head and an `eyes` attachment; missing rigs retain their normal pose.
+`HeadAimYawLimit` (default 85 degrees) and `HeadAimPitchLimit` (60 degrees) limit
+neck rotation. Taunts and framework forced sequences retain their authored poses.
+The correction only affects rendering and clears when switching weapons.
