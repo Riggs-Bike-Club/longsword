@@ -5,6 +5,15 @@ function SWEP:ShootBullet(damage, num_bullets, aimcone)
 	bullet.Src 	= self:GetOwner():GetShootPos() -- Source
 	bullet.Dir 	= self:GetOwner():GetAimVector() -- Dir of bullet
 	bullet.Spread 	= Vector(aimcone, aimcone, 0)	-- Aim Cone
+    if ( self.Spread.Radial ) then
+        local seed = self:EntIndex() + engine.TickCount() + 1
+        local rotation = util.SharedRandom("longsword.spread", 0, 360, seed)
+        local angle = Angle(math.sin(rotation), math.cos(rotation), 0)
+        angle:Mul(aimcone * util.SharedRandom("longsword.spread.radius", 0, 45, seed) * math.sqrt(2))
+        angle:Add(bullet.Dir:Angle())
+        bullet.Dir = angle:Forward()
+        bullet.Spread = Vector()
+    end
 
 	if self.Primary.Tracer then
 		bullet.TracerName = self.Primary.Tracer
@@ -25,9 +34,20 @@ function SWEP:ShootBullet(damage, num_bullets, aimcone)
 		end
 	end
 
-    if self.Primary.DamageType then
+    if ( self.Primary.DamageType or self.Primary.DamageMin or self.Primary.ImpactEffect ) then
         bullet.Callback = function(attacker, trace, damageInfo)
-            damageInfo:SetDamageType(self.Primary.DamageType)
+            if ( self.Primary.DamageType ) then
+                damageInfo:SetDamageType(self.Primary.DamageType)
+            end
+            if ( self.Primary.DamageMin ) then
+                damageInfo:SetDamage(self:GetDamageAtRange(trace.StartPos:Distance(trace.HitPos)))
+            end
+            if ( self.Primary.ImpactEffect ) then
+                local effect = EffectData()
+                effect:SetOrigin(trace.HitPos)
+                effect:SetNormal(trace.HitNormal)
+                util.Effect(self.Primary.ImpactEffect, effect, true)
+            end
         end
     end
 
@@ -41,6 +61,19 @@ function SWEP:AddRecoil()
 end
 
 function SWEP:CalculateSpread()
+    if ( self.Spread.Multiplicative ) then
+        local spread = self.Primary.Cone
+        local owner = self:GetOwner()
+        if ( !self:GetIronsights() ) then
+            spread = (spread + (self.Spread.HipFireAdd or 0)) * (self.Spread.HipFireMod or 1)
+        end
+        if ( self.Overheat ) then
+            spread = spread + (self.Spread.HeatAdd or 0) * self:GetCurrentHeat() / math.max(self.HeatCapacity or 75, 1)
+        end
+        local moving = math.Clamp(owner:GetVelocity():Length2D() / math.max(owner:GetWalkSpeed(), 1), 0, 1)
+        spread = (spread + (self.Spread.MoveAdd or 0) * moving) * Lerp(moving, 1, self.Spread.MoveMod or 1)
+        return spread
+    end
 	local spread = self.Primary.Cone
 	local maxSpeed = self.LoweredPos and self:GetOwner():GetWalkSpeed() or self:GetOwner():GetRunSpeed()
 
@@ -68,6 +101,16 @@ function SWEP:CalculateSpread()
 	return spread
 end
 
+--- Returns linear damage falloff between the configured distances in Source units.
+---@param distance number
+---@return number damage
+function SWEP:GetDamageAtRange(distance)
+    local near = self.Primary.RangeMin or 0
+    local far = math.max(self.Primary.RangeMax or near, near + 1)
+    local fraction = math.Clamp((distance - near) / (far - near), 0, 1)
+    return Lerp(fraction, self.Primary.Damage, self.Primary.DamageMin or self.Primary.Damage)
+end
+
 function SWEP:PrimaryAttack()
 	if self:UsesProjectileAttack() then
 		return self:PrimaryProjectileAttack()
@@ -78,8 +121,12 @@ function SWEP:PrimaryAttack()
 	end
 
 	if not self:CanShoot() then return end
+    if ( self.Bash and self:GetOwner():KeyDown(IN_USE) and !self:GetIronsights() ) then
+        return self:BashAttack()
+    end
 
-	local clip = self:Clip1()
+    local clip = self:GetAvailablePrimaryAmmo()
+    if ( clip > 0 and !self:PrepareTriggerDelay() ) then return end
 
 	if self.Primary.Burst and clip >= 3 then
 		self:SetBursting(true)
@@ -92,6 +139,10 @@ function SWEP:PrimaryAttack()
 		self:Shoot()
 		self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 	else
+        if ( self.BottomlessClip ) then
+            self:ResetTriggerDelay()
+            self:EmitWeaponSound(self.EmptySound)
+        end
         if ( !self.NoDryFireAnim and self:GetDryFireAnim() != nil ) then
 			if self.HammerDown == true then return end
 			self:PlayAnim(self:GetDryFireAnim())
@@ -109,7 +160,14 @@ function SWEP:PrimaryAttack()
 end
 
 function SWEP:Shoot()
-	self:TakePrimaryAmmo(1)
+    if ( self.BottomlessClip and self:Ammo1() > 0 ) then
+        self:GetOwner():RemoveAmmo(1, self:GetPrimaryAmmoType())
+    else
+        self:TakePrimaryAmmo(1)
+    end
+    if ( self.TriggerDelay ) then
+        self:SetTriggerFired(true)
+    end
 
 	self:ShootBullet(self.Primary.Damage, self.Primary.NumShots, self:CalculateSpread())
 
@@ -117,7 +175,11 @@ function SWEP:Shoot()
 	self:ViewPunch()
 	
 	self:SetReloadTime(CurTime() + self.Primary.Delay)
+    self:AddShotHeat()
 end
 
 function SWEP:SecondaryAttack() 
+    if ( self.Bash and self.BashSecondary and self:CanShoot() ) then
+        self:BashAttack()
+    end
 end

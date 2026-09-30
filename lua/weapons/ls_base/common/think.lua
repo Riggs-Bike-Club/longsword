@@ -3,6 +3,9 @@ function SWEP:Think()
 	local owner = self:GetOwner()
 	if not IsValid(owner) or not owner:IsPlayer() then return end
 
+    self:HeatThink()
+    self:TriggerThink()
+
 	self:IronsightsThink()
 	self:RecoilThink()
 	self:IdleThink()
@@ -134,6 +137,8 @@ end
 
 -- Re-plays the loop the new ironsights state calls for. Runs on every ADS toggle rather than only for weapons with a dedicated ironsights idle, because a walk/sprint loop entered just before aiming would otherwise keep looping until the sights come back down -- the player stands still, aimed, with the hands still sprinting.
 function SWEP:RefreshIronsightsLoop()
+    if ( self.TriggerDelay and self:GetTriggerReadyTime() > 0 ) then return end
+    if ( self.Overheat and self:IsHeatBlocked() ) then return end
 	if self:GetReloading() then return end
 
 	-- With a dedicated ADS idle the swap is instant and cuts whatever is playing. Without one there is nothing to swap to mid-animation, so only a settled loop is refreshed: a draw/fire/inspect already queued an idle and picks the right loop up itself once it finishes.
@@ -370,7 +375,7 @@ function SWEP:IronsightsThink()
 			else
 				self.IronsightsEarly = false
 			end
-			self:EmitWeaponSound(longsword.ironInSound or "LS_Generic.ADSIn")
+            self:EmitWeaponSound(self.EnterSightsSound or longsword.ironInSound or "LS_Generic.ADSIn")
 		end
 	elseif (not self.Owner:KeyDown(IN_ATTACK2) or not self:CanIronsight()) and self:GetIronsights() then
 		if hook.Run("LSOnIronsights", self, false) then return end
@@ -384,7 +389,7 @@ function SWEP:IronsightsThink()
 				self.IronsightsEarly = false
 			end
 	
-			self:EmitWeaponSound(longsword.ironOutSound or "LS_Generic.ADSOut")
+            self:EmitWeaponSound(self.ExitSightsSound or longsword.ironOutSound or "LS_Generic.ADSOut")
 		end
 	end
 end

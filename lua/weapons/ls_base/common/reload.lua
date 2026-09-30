@@ -15,6 +15,7 @@ function SWEP:Inspect()
 end
 
 function SWEP:Reload()
+    if ( self.BottomlessClip ) then return end
 	self.HammerDown = false
 
 	if self:UsesProjectileAttack() then return end

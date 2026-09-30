@@ -101,29 +101,51 @@ SWEP.Pullback = {
     Delay = 0.5,
 }
 
+--- Allocates predicted action state only for enabled features and passes the last occupied slots to derived weapons.
 function SWEP:SetupDataTables()
-	self:NetworkVar("Bool", 0, "Ironsights")
-	self:NetworkVar("Bool", 1, "Reloading")
-	self:NetworkVar("Bool", 2, "Bursting")
-	self:NetworkVar("Bool", 3, "Lowered")
+    self:NetworkVar("Bool", 0, "Ironsights")
+    self:NetworkVar("Bool", 1, "Reloading")
+    self:NetworkVar("Bool", 2, "Bursting")
+    self:NetworkVar("Bool", 3, "Lowered")
+    self:NetworkVar("String", 0, "CurAttachment")
+    self:NetworkVar("Float", 1, "IronsightsRecoil")
+    self:NetworkVar("Float", 2, "Recoil")
+    self:NetworkVar("Float", 3, "ReloadTime")
+    self:NetworkVar("Float", 4, "NextIdle")
 
-	self:NetworkVar("String", 0, "CurAttachment")
-
-	self:NetworkVar("Float", 1, "IronsightsRecoil")
-	self:NetworkVar("Float", 2, "Recoil")
-	self:NetworkVar("Float", 3, "ReloadTime")
-	self:NetworkVar("Float", 4, "NextIdle")
-
-	if self.ExtraDataTables then -- change these when adding network vars
-		self:ExtraDataTables({
-			["Bool"] = 3,
-			["String"] = 1,
-			["Float"] = 4
-		})
-	end
+    local slots = {Bool = 3, String = 1, Float = 4}
+    if ( self.TriggerDelay ) then
+        self:NetworkVar("Bool", slots.Bool + 1, "TriggerFired")
+        self:NetworkVar("Bool", slots.Bool + 2, "SemiAutomatic")
+        self:NetworkVar("Float", slots.Float + 1, "TriggerReadyTime")
+        slots.Bool = slots.Bool + 2
+        slots.Float = slots.Float + 1
+    end
+    if ( self.Overheat ) then
+        self:NetworkVar("Bool", slots.Bool + 1, "Overheated")
+        self:NetworkVar("Bool", slots.Bool + 2, "HeatLocked")
+        self:NetworkVar("Float", slots.Float + 1, "HeatAmount")
+        self:NetworkVar("Float", slots.Float + 2, "HeatDecayTime")
+        self:NetworkVar("Float", slots.Float + 3, "HeatFixTime")
+        self:NetworkVar("Float", slots.Float + 4, "HeatRecoveryEnd")
+        slots.Bool = slots.Bool + 2
+        slots.Float = slots.Float + 4
+    end
+    if ( self.SprintToFireTime ) then
+        self:NetworkVar("Float", slots.Float + 1, "SprintReadyTime")
+        slots.Float = slots.Float + 1
+    end
+    if ( self.ExtraDataTables ) then
+        self:ExtraDataTables(slots)
+    end
 end
 
 function SWEP:ResetValues()
+    self:ResetTriggerDelay()
+    if ( self.Overheat ) then
+        self:SetHeatFixTime(0)
+        self:SetHeatRecoveryEnd(0)
+    end
 	self:SetIronsights(false)
 
 	self:SetReloading(false)
@@ -354,6 +376,7 @@ function SWEP:HandleHolsterAnim(wep)
 end
 
 function SWEP:Holster(w)
+    self:ResetTriggerDelay()
 	if not self:HandleHolsterAnim(w) then return false end
 
 	-- Holster runs on the way out of a weapon the owner may already have lost (death, a strip), so everything below has to survive a NULL owner and a torn-down viewmodel.

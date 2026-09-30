@@ -83,7 +83,11 @@ function SWEP:IronsightsOffset(oPos, oAng)
 
 	local mid, midang = self:GetIronsightsMid()
 	local dir = is and 1 or 0
-	self.IronsightsFrac = Lerp(ft * (is and 4.5 or 3.1) * (self.IronsightsSpeed or 1), self.IronsightsFrac or 0, dir)
+    if ( self.AimDownSightsTime ) then
+        self.IronsightsFrac = math.Approach(self.IronsightsFrac or 0, dir, ft / math.max(self.AimDownSightsTime, 0.001))
+    else
+        self.IronsightsFrac = Lerp(ft * (is and 4.5 or 3.1) * (self.IronsightsSpeed or 1), self.IronsightsFrac or 0, dir)
+    end
 
 	local frac = self.IronsightsFrac
 	local vec = longsword.math.vecQuadBezier(zero, mid or zero, self.IronsightsPos, frac)

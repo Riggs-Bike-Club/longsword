@@ -410,6 +410,16 @@ end
 function SWEP:CalcView(ply, origin, angles, fov)
 	local ct = CurTime()
 
+    if ( self.CameraAttachment ) then
+        local viewModel = self:GetOwnerViewModel()
+        local attachment = viewModel and viewModel:GetAttachment(self.CameraAttachment)
+        if ( attachment ) then
+            local _, offset = WorldToLocal(attachment.Pos, attachment.Ang, viewModel:GetPos(), viewModel:GetAngles())
+            local scale = self:GetIronsights() and (self.CameraScaleAimed or 0.5) or (self.CameraScale or 1)
+            angles = angles + offset * scale
+        end
+    end
+
 	local roll = self.RecoilCameraRoll or 0
 	local cv = GetConVar("longsword_shootfov")
 	if not cv or not cv:GetBool() then

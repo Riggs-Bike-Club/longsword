@@ -1,5 +1,25 @@
 function SWEP:ViewPunch()
 	if SERVER or (not game.SinglePlayer() and not IsFirstTimePredicted()) then return end
+    if ( self.Recoil and self.Recoil.Up ) then
+        local recoil = self.Recoil
+        local owner = self:GetOwner()
+        local multiplier = self.Primary.Recoil
+        if ( !self:GetIronsights() ) then
+            multiplier = multiplier * (recoil.HipFireMultiplier or 1)
+        end
+        if ( owner:Crouching() ) then
+            multiplier = multiplier * (recoil.CrouchMultiplier or 1)
+        end
+        local offset = Angle(
+            -(recoil.Up + util.SharedRandom("longsword.recoil.up", 0, recoil.RandomUp or 0)),
+            util.SharedRandom("longsword.recoil.side", -(recoil.Side or 0), recoil.Side or 0),
+            0
+        ) * multiplier
+        hook.Run("LongswordRecoil", self, offset)
+        owner:ViewPunch(offset * (recoil.Kick or 0.6))
+        owner:SetEyeAngles(owner:EyeAngles() + offset)
+        return
+    end
 	local punch = Angle()
 	local i = 3 * self.Primary.Recoil
 

@@ -142,3 +142,77 @@ lua tests/animation_config.lua
 lua tests/action_timing.lua
 lua tests/melee_timing.lua
 ```
+
+## Trigger delay, heat and gun bashing
+
+These features are opt-in and use predicted network state. Define them in the
+weapon alongside `Animations` and `AnimationEvents`:
+
+```lua
+SWEP.BottomlessClip = true
+SWEP.Primary.ClipSize = -1
+SWEP.TriggerDelay = true
+SWEP.TriggerDelayTime = 1.25
+SWEP.TriggerReleaseAnimation = true
+SWEP.Overheat = true
+SWEP.HeatPerShot = 1
+SWEP.HeatCapacity = 75
+SWEP.HeatDissipation = 25
+SWEP.HeatDelayTime = 0.25
+SWEP.HeatLockout = false
+SWEP.HeatFix = true
+SWEP.HeatFixProgress = 0.8
+SWEP.Bash = true
+SWEP.BashSecondary = true
+SWEP.BashDamage = 50
+SWEP.BashRange = 64
+SWEP.PreBashTime = 0.5
+SWEP.PostBashTime = 0.5
+SWEP.Animations = {
+    trigger = "spinup",
+    untrigger = "spindown",
+    fix = "heat",
+    bash = "melee",
+}
+```
+
+Bottomless weapons consume reserve ammo directly, then any rounds left in an old
+magazine after conversion. They cannot reload. Trigger delay starts once per
+hold; release, sprinting, lowering, holstering and death cancel it. Set
+`TriggerReleaseAnimation` to play wind-down after firing as well as after a
+cancelled wind-up. `SetSemiAutomatic(true)` limits this system to one shot per
+hold without modifying the shared `Primary` table.
+
+Heat starts cooling after the shot cooldown plus `HeatDelayTime`. Cooling also
+accounts for time spent holstered. At capacity, `fix` plays after this delay and
+blocks firing through the animation; `HeatFix` clears heat at `HeatFixProgress`.
+`HeatLockout` additionally blocks until completely cool. `GetCurrentHeat()`
+returns cooled heat; `GetHeatAmount()` is the last stored snapshot. Holstering
+cancels the recovery animation without clearing a pending overheat.
+
+`Bash` enables use-plus-primary bashing. `BashSecondary` additionally assigns bash
+to secondary attack and disables ironsights; leave it unset for normal ADS.
+`BashMinProgress` sets the fraction of the bash animation required before another
+action, bounded by `PreBashTime + PostBashTime`.
+
+Animation events can set `stopSound` to a sound path or list, for example to stop
+wind-up audio when wind-down begins. Primary firing audio accepts `SoundLevel`,
+`SoundPitch` and `SoundVolume`. New features reserve network slots only on weapons
+that enable them; existing weapons retain their original slots. Respawn weapons
+after enabling/disabling features that change their network table.
+
+Additional optional port settings include `Primary.DamageMin`, `RangeMin` and
+`RangeMax` (linear falloff in Source units), `Primary.ImpactEffect`,
+`AimDownSightsTime`, `SprintToFireTime`, `SpeedMultSights`, `SpeedMultShooting`,
+`EnterSightsSound`, `ExitSightsSound`, and `CameraAttachment` with `CameraScale`
+and `CameraScaleAimed`. `Recoil.Up`, `Side`, `RandomUp`, `HipFireMultiplier`,
+`CrouchMultiplier` and `Kick` enable directional recoil without integer rounding.
+`Spread.Multiplicative` supports `HipFireMod`, `HipFireAdd`, `MoveMod`, `MoveAdd`
+and `HeatAdd`; `Spread.Radial` selects a radial bullet distribution.
+
+Additional regression checks:
+
+```text
+lua tests/heat_trigger.lua
+lua tests/directional_recoil.lua
+```

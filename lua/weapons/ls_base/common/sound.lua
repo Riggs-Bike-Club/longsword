@@ -56,7 +56,7 @@ function SWEP:PlayFireSound()
         return
     end
 
-    self:EmitWeaponSound(self.Primary.Sound)
+    self:EmitWeaponSound(self.Primary.Sound, self.Primary.SoundLevel, self.Primary.SoundPitch, self.Primary.SoundVolume)
 
     if ( !istable(self.Primary.SoundLayers) ) then
         return

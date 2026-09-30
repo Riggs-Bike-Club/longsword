@@ -290,4 +290,15 @@ weapon:PlayAnim("reload")
 weapon.removed = true
 timers[#timers].callback()
 Check(#sounds == 6, "Removed weapons do not dispatch events")
+weapon.removed = false
+local stopped = {}
+function weapon:StopSound(sound)
+    stopped[#stopped + 1] = sound
+end
+weapon.AnimationEvents.spindown = {
+    {time = 0, stopSound = {"windup", "motor"}, sound = "winddown"},
+}
+weapon:PlayAnim("spindown")
+Check(stopped[1] == "windup" and stopped[2] == "motor", "Animation transitions stop named sound layers")
+Check(sounds[#sounds][1] == "winddown", "Replacement audio starts with the transition")
 print("Animation configuration: " .. passed .. " checks passed")

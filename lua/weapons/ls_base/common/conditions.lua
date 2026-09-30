@@ -10,12 +10,16 @@ function SWEP:IsSprinting()
 end
 
 function SWEP:CanShoot()
+    if ( self.SprintToFireTime and self:GetSprintReadyTime() > CurTime() ) then return false end
+    if ( self.HolsterAnimEnd or (self.Overheat and self:IsHeatBlocked()) ) then return false end
 	if self.ExtraCanShoot and not self:ExtraCanShoot() then return false end
 
 	return not self:GetBursting() and not (self.LoweredPos and self:IsSprinting()) and self:GetReloadTime() < CurTime() and not self:GetLowered()
 end
 
 function SWEP:CanIronsight()
+    if ( self.Bash and self.BashSecondary ) then return false end
+    if ( self.Overheat and self:IsHeatBlocked() ) then return false end
 	if self.NoIronsights then
 		return false
 	end
@@ -28,6 +32,7 @@ end
 end
 
 function SWEP:CanReload()
+    if ( self.BottomlessClip or (self.Overheat and self:IsHeatBlocked()) ) then return false end
     local clipSize = self.Primary.ClipSize
 
     if self:UsesShotgunReload() and self.CanChamberShotgun then
@@ -37,4 +42,3 @@ function SWEP:CanReload()
     return self:Ammo1() > 0 and self:Clip1() < clipSize
         and !self:GetReloading() and self:GetNextPrimaryFire() < CurTime() and ( self.NextFMToggle or 0 ) < CurTime()
 end
-

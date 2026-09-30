@@ -202,6 +202,11 @@ function SWEP:RunAnimationEvent(owner, serial, event)
     if ( !IsValid(owner) or !owner:Alive() or self:GetOwner() != owner ) then return end
     if ( owner:GetActiveWeapon() != self ) then return end
 
+    if ( event.stopSound ) then
+        for _, soundName in ipairs(istable(event.stopSound) and event.stopSound or {event.stopSound}) do
+            self:StopSound(soundName)
+        end
+    end
     if ( event.sound ) then
         self:EmitWeaponSound(event.sound, event.level, event.pitch, event.volume)
     end
