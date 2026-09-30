@@ -109,4 +109,12 @@ Check(beforeElbow:Distance(afterElbow) > 0.1, "Elbow offset changes arm posture"
 Check(beforeWrist:Distance(afterWrist) < 0.001, "Changing elbow posture leaves the wrist target fixed")
 Check(math.abs(shoulder:Distance(afterElbow) - 5) < 0.001 and math.abs(afterElbow:Distance(afterWrist) - 3) < 0.001, "Elbow tuning retains both limb lengths")
 Check(arms:GetTPIKElbowHint(body, "R", shoulder, 5):Distance(shoulder + Vector(0, -5, -3.75)) < 0.001, "One arm's offset does not affect the other")
+local head = setmetatable({HeadAimOffset = Angle(5, -8, 12)}, {__index = base})
+local look = Angle(20, 110, 0)
+local adjusted = head:GetHeadAimAngle(look)
+local _, relative = WorldToLocal(vector_origin, adjusted, vector_origin, look)
+Check(math.abs(math.AngleDifference(relative.p, 5)) < 0.001 and math.abs(math.AngleDifference(relative.y, -8)) < 0.001 and math.abs(math.AngleDifference(relative.r, 12)) < 0.001, "Head offsets apply in the tracked look direction's local axes")
+Check(look == Angle(20, 110, 0), "Head offsets do not mutate the aim angle")
+head.HeadAimOffset = nil
+Check(head:GetHeadAimAngle(look) == look, "Missing head offsets preserve aim tracking")
 print("Native TPIK: " .. passed .. " checks passed")

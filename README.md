@@ -313,3 +313,9 @@ the IK bend direction; they are not direct translations of the final elbow.
 The solver preserves arm lengths and the same reachable wrist target. A fully
 extended arm has little room to change posture. Hand-angle adjustments remain
 independent and only change the grip rotation.
+
+`SWEP.HeadAimOffset = Angle(0, 0, 0)` adds manual pitch, yaw and roll after aim
+tracking. For example, `Angle(0, 0, 10)` adds a ten-degree sideways head tilt.
+The offset uses the tracked look direction's local axes, not the model's head-bone
+axes. It requires `HeadTracksAim = true`; zero preserves the tracked pose. The
+manual offset is applied after the tracking limits, so keep adjustments modest.

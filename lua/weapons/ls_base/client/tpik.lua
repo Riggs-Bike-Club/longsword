@@ -293,6 +293,13 @@ function SWEP:DrawTPIKWorldModel()
     return true
 end
 
+--- Applies the weapon's manual head tilt in the tracked look direction's local axes.
+function SWEP:GetHeadAimAngle(angle)
+    if ( !isangle(self.HeadAimOffset) ) then return Angle(angle) end
+    local _, rotated = LocalToWorld(vector_origin, self.HeadAimOffset, vector_origin, angle)
+    return rotated
+end
+
 --- Aligns a configured weapon owner's eyes with their aim while preserving the model's head-bone axes.
 function SWEP:ApplyHeadAim(bBonesReady)
     local owner = self:GetOwner()
@@ -320,7 +327,7 @@ function SWEP:ApplyHeadAim(bBonesReady)
     local pitchLimit = self.HeadAimPitchLimit or 60
     local target = Angle(math.Clamp(math.NormalizeAngle(aim.p), -pitchLimit, pitchLimit),
         body.y + math.Clamp(math.AngleDifference(aim.y, body.y), -yawLimit, yawLimit), 0)
-    local _, rotation = LocalToWorld(vector_origin, self.headAimRelative, vector_origin, target)
+    local _, rotation = LocalToWorld(vector_origin, self.headAimRelative, vector_origin, self:GetHeadAimAngle(target))
     local pose = Matrix(matrix)
     pose:SetAngles(rotation)
     MoveBone(owner, head, pose)
