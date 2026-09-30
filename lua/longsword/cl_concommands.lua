@@ -4,7 +4,8 @@ concommand.Add("longsword_debug_attachments", function()
     PrintTable(vm:GetAttachments())
 end)
 
-local debugIronsightsWeapon
+longsword.debugIronsights = longsword.debugIronsights or {}
+local debugIronsights = longsword.debugIronsights
 
 --- Toggles held aim input for the active Longsword weapon; an optional zero or one explicitly disables or enables it.
 ---@param client Player
@@ -19,10 +20,11 @@ local function ToggleDebugIronsights(client, commandName, arguments)
     local owner = LocalPlayer()
     if ( !IsValid(owner) ) then return end
     local weapon = owner:GetActiveWeapon()
-    local bEnabled = arguments[1] == "1" or (arguments[1] == nil and debugIronsightsWeapon != weapon)
+    local bEnabled = arguments[1] == "1" or (arguments[1] == nil and debugIronsights.weapon != weapon)
 
     if ( !bEnabled ) then
-        debugIronsightsWeapon = nil
+        debugIronsights.weapon = nil
+        debugIronsights.bRelease = true
         print("[Longsword] Debug ironsights disabled.")
         return
     end
@@ -37,18 +39,26 @@ local function ToggleDebugIronsights(client, commandName, arguments)
         return
     end
 
-    debugIronsightsWeapon = weapon
+    debugIronsights.weapon = weapon
+    debugIronsights.bRelease = false
     print("[Longsword] Debug ironsights enabled. Run longsword_debug_ironsights again to release aim.")
 end
 
 --- Holds the normal aim button until toggled off, the weapon changes, or the player dies.
 ---@param command CUserCmd
 local function ApplyDebugIronsights(command)
-    if ( !IsValid(debugIronsightsWeapon) ) then return end
+    if ( debugIronsights.bRelease ) then
+        command:RemoveKey(IN_ATTACK2)
+        debugIronsights.bRelease = false
+        return
+    end
+
+    if ( !IsValid(debugIronsights.weapon) ) then return end
 
     local owner = LocalPlayer()
-    if ( !IsValid(owner) or !owner:Alive() or owner:GetActiveWeapon() != debugIronsightsWeapon ) then
-        debugIronsightsWeapon = nil
+    if ( !IsValid(owner) or !owner:Alive() or owner:GetActiveWeapon() != debugIronsights.weapon ) then
+        debugIronsights.weapon = nil
+        command:RemoveKey(IN_ATTACK2)
         return
     end
 
