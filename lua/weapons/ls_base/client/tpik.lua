@@ -31,6 +31,33 @@ function SWEP:SolveTPIKArm(shoulder, target, hint, upperLength, lowerLength)
     return shoulder + direction * along + bend * height, shoulder + direction * length
 end
 
+--- Rotates a posed bone between limb directions without discarding its authored axes or twist.
+function SWEP:RotateTPIKBone(matrix, original, desired)
+    if ( original:LengthSqr() < 0.000001 or desired:LengthSqr() < 0.000001 ) then return Matrix(matrix) end
+    local from = original:GetNormalized()
+    local to = desired:GetNormalized()
+    local dot = math.Clamp(from:Dot(to), -1, 1)
+    local axis = from:Cross(to)
+    local pose = Matrix(matrix)
+    if ( dot > 0.999999 ) then return pose end
+    if ( axis:LengthSqr() < 0.000001 ) then
+        axis = matrix:GetUp()
+        axis = axis - from * axis:Dot(from)
+        if ( axis:LengthSqr() < 0.000001 ) then
+            axis = from:Cross(Vector(0, 1, 0))
+            if ( axis:LengthSqr() < 0.000001 ) then axis = from:Cross(vector_up) end
+        end
+    end
+    axis:Normalize()
+    local angle = Angle()
+    angle:RotateAroundAxis(axis, math.deg(math.acos(dot)))
+    local rotation = Matrix()
+    rotation:SetAngles(angle)
+    pose = rotation * matrix
+    pose:SetTranslation(matrix:GetTranslation())
+    return pose
+end
+
 --- Moves a bone subtree while preserving helper-bone offsets and stopping at the next driven joint.
 local function MoveBone(owner, index, matrix, stop)
     local original = owner:GetBoneMatrix(index)
@@ -49,6 +76,15 @@ local function MoveBone(owner, index, matrix, stop)
     end
 end
 
+--- Applies a per-weapon grip rotation in the animated hand's local axes.
+function SWEP:GetTPIKHandAngle(side, angle)
+    local offsets = self.TPIKHandAngles or {}
+    local offset = offsets[side == "L" and "left" or "right"]
+    if ( !isangle(offset) ) then return Angle(angle) end
+    local _, rotated = LocalToWorld(vector_origin, offset, vector_origin, angle)
+    return rotated
+end
+
 --- Applies an animated hand target and solves the player's own arm lengths around it.
 function SWEP:ApplyTPIKArm(owner, model, side)
     local prefix = "ValveBiped.Bip01_" .. side
@@ -61,32 +97,52 @@ function SWEP:ApplyTPIKArm(owner, model, side)
     local shoulder = upperMatrix:GetTranslation()
     local originalElbow = lowerMatrix:GetTranslation()
     local originalHand = handMatrix:GetTranslation()
-    local elbow, wrist = self:SolveTPIKArm(shoulder, target:GetTranslation(), originalElbow,
-        shoulder:Distance(originalElbow), originalElbow:Distance(originalHand))
+    local upperLength = shoulder:Distance(originalElbow)
+    local outward = owner:GetRight() * (side == "R" and 1 or -1)
+    local hint = shoulder + (outward - owner:GetUp() * 0.75) * upperLength
+    local fingers = {}
+    for finger = 0, 4 do
+        for _, suffix in ipairs({"", "1", "2"}) do
+            local name = prefix .. "_Finger" .. finger .. suffix
+            local index, original = GetBone(owner, name)
+            local source, sourcePose = GetBone(model, name)
+            if ( original and sourcePose ) then
+                local parent = owner:GetBoneParent(index)
+                local sourceParent = model:GetBoneParent(source)
+                local parentPose = parent >= 0 and owner:GetBoneMatrix(parent)
+                local sourceParentPose = sourceParent >= 0 and model:GetBoneMatrix(sourceParent)
+                if ( parentPose and sourceParentPose ) then
+                    local position = WorldToLocal(original:GetTranslation(), original:GetAngles(), parentPose:GetTranslation(), parentPose:GetAngles())
+                    local _, angle = WorldToLocal(sourcePose:GetTranslation(), sourcePose:GetAngles(), sourceParentPose:GetTranslation(), sourceParentPose:GetAngles())
+                    fingers[#fingers + 1] = {index = index, parent = parent, position = position, angle = angle, scale = original:GetScale()}
+                end
+            end
+        end
+    end
+    local elbow, wrist = self:SolveTPIKArm(shoulder, target:GetTranslation(), hint,
+        upperLength, originalElbow:Distance(originalHand))
     if ( !elbow ) then return false end
 
-    local upperPose = Matrix(upperMatrix)
-    local lowerPose = Matrix(lowerMatrix)
-    upperPose:SetAngles((elbow - shoulder):AngleEx(upperMatrix:GetAngles():Up()))
+    local upperPose = self:RotateTPIKBone(upperMatrix, originalElbow - shoulder, elbow - shoulder)
+    local lowerPose = self:RotateTPIKBone(lowerMatrix, originalHand - originalElbow, wrist - elbow)
     lowerPose:SetTranslation(elbow)
-    lowerPose:SetAngles((wrist - elbow):AngleEx(lowerMatrix:GetAngles():Up()))
     MoveBone(owner, upper, upperPose, lower)
     MoveBone(owner, lower, lowerPose, hand)
     local handPose = Matrix(target)
     handPose:SetTranslation(wrist)
+    handPose:SetAngles(self:GetTPIKHandAngle(side, target:GetAngles()))
+    handPose:SetScale(handMatrix:GetScale())
     MoveBone(owner, hand, handPose)
 
-    local correction = wrist - target:GetTranslation()
-    for finger = 0, 4 do
-        for _, suffix in ipairs({"", "1", "2"}) do
-            local name = prefix .. "_Finger" .. finger .. suffix
-            local index = owner:LookupBone(name)
-            local _, pose = GetBone(model, name)
-            if ( index and pose ) then
-                pose = Matrix(pose)
-                pose:SetTranslation(pose:GetTranslation() + correction)
-                MoveBone(owner, index, pose)
-            end
+    for _, finger in ipairs(fingers) do
+        local parent = owner:GetBoneMatrix(finger.parent)
+        if ( parent ) then
+            local position, angle = LocalToWorld(finger.position, finger.angle, parent:GetTranslation(), parent:GetAngles())
+            local pose = Matrix()
+            pose:SetTranslation(position)
+            pose:SetAngles(angle)
+            pose:SetScale(finger.scale)
+            MoveBone(owner, finger.index, pose)
         end
     end
     return true

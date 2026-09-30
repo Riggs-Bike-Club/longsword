@@ -61,4 +61,36 @@ if ( IsValid(owner) and isfunction(owner.IsWeaponRaised) ) then
     weapon.bLowered = owner:IsWeaponRaised()
     Check(weapon:IsTPIKLowered() == !owner:IsWeaponRaised(), "Framework raise state overrides conflicting standalone state")
 end
+local pose = Matrix()
+pose:SetTranslation(Vector(7, 8, 9))
+pose:SetAngles(Angle(23, 41, 67))
+pose:SetScale(Vector(1.2, 0.9, 1.1))
+local original = Vector(1, 2, 3):GetNormalized()
+local localDirection = WorldToLocal(original, angle_zero, vector_origin, Angle(23, 41, 67))
+for _, desired in ipairs({original, -original, Vector(0, 0, 1), Vector(1, 0, 0), Vector(0, -1, 0)}) do
+    local rotated = base:RotateTPIKBone(pose, original, desired)
+    local normalized = Matrix(rotated)
+    normalized:SetScale(Vector(1, 1, 1))
+    local aligned = LocalToWorld(localDirection, angle_zero, vector_origin, normalized:GetAngles())
+    Check(aligned:GetNormalized():Dot(desired:GetNormalized()) > 0.9999, "Bone axes follow the solved limb without assuming its local X axis")
+    Check(rotated:GetTranslation():Distance(pose:GetTranslation()) < 0.001, "Bone rotation preserves its position")
+    Check(rotated:GetScale():Distance(pose:GetScale()) < 0.001, "Bone rotation preserves player rig scale")
+end
+for yaw = -180, 180, 30 do
+    for pitch = -85, 85, 17 do
+        local target = shoulder + Angle(pitch, yaw, 0):Forward() * 7
+        local elbow, wrist = base:SolveTPIKArm(shoulder, target, shoulder + Vector(0, 5, -4), 5, 3)
+        Check(math.abs(shoulder:Distance(elbow) - 5) < 0.001 and math.abs(elbow:Distance(wrist) - 3) < 0.001, "Aim sweep preserves both limb lengths")
+    end
+end
+local grips = setmetatable({TPIKHandAngles = {left = Angle(0, 0, 25), right = Angle(10, 0, 0)}}, {__index = base})
+local sourceAngle = Angle(20, 50, 70)
+for _, side in ipairs({"L", "R"}) do
+    local result = grips:GetTPIKHandAngle(side, sourceAngle)
+    local _, offset = WorldToLocal(vector_origin, result, vector_origin, sourceAngle)
+    local expected = grips.TPIKHandAngles[side == "L" and "left" or "right"]
+    Check(math.abs(math.AngleDifference(offset.p, expected.p)) < 0.001 and math.abs(math.AngleDifference(offset.r, expected.r)) < 0.001, "Each grip adjustment rotates in its own animated hand axes")
+end
+grips.TPIKHandAngles = nil
+Check(grips:GetTPIKHandAngle("L", sourceAngle) == sourceAngle, "Unconfigured hand angles preserve the animation")
 print("Native TPIK: " .. passed .. " checks passed")

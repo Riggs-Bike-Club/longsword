@@ -282,3 +282,16 @@ ValveBiped head and an `eyes` attachment; missing rigs retain their normal pose.
 `HeadAimYawLimit` (default 85 degrees) and `HeadAimPitchLimit` (60 degrees) limit
 neck rotation. Taunts and framework forced sequences retain their authored poses.
 The correction only affects rendering and clears when switching weapons.
+
+Fine-tune individual grips with local hand rotations (pitch, yaw, roll):
+
+```lua
+SWEP.TPIKHandAngles = {
+    left = Angle(0, 0, 0),
+    right = Angle(0, 0, 0),
+}
+```
+
+These offsets rotate the animated hand and its fingers without moving the wrist
+target. Omit either hand to retain its authored orientation. Arm rotations preserve
+the player rig's bone axes and scale; finger animation retains player finger lengths.
