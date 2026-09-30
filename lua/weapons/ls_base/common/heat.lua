@@ -47,7 +47,7 @@ function SWEP:HeatThink()
     end
 
     if ( !self:GetOverheated() or self:GetHeatFixTime() > 0 ) then return end
-    if ( now < self:GetHeatDecayTime() or self.HolsterAnimEnd ) then return end
+    if ( self.HolsterAnimEnd ) then return end
 
     local duration = self:PlayAnimation("fix") or 0
     local endTime = now + duration

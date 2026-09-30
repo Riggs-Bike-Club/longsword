@@ -112,12 +112,17 @@ end
 Check(weapon.shots == 75 and owner.ammo == 125, "Automatic fire continues without repeated wind-up")
 Check(weapon:GetCurrentHeat() == 75 and weapon:GetOverheated(), "The 75th uninterrupted shot overheats")
 Check(not weapon:GetHeatLocked(), "HeatLockout false retains animated recovery")
+weapon:HeatThink()
+Check(weapon.animations[#weapon.animations] == "fix" and now < weapon:GetHeatDecayTime(), "Heat recovery starts immediately before the cooling delay expires")
+local animationCount = #weapon.animations
+owner.bHeld = false
+weapon:TriggerThink()
+weapon:HeatThink()
+Check(#weapon.animations == animationCount, "Trigger release cannot replace or restart overheat recovery")
+owner.bHeld = true
 now = now + 0.1
 weapon:PrimaryAttack()
 Check(weapon.shots == 75, "Overheating prevents the next shot")
-now = weapon:GetHeatDecayTime() + 0.001
-weapon:HeatThink()
-Check(weapon.animations[#weapon.animations] == "fix", "Heat recovery starts after the cooling delay")
 Check(weapon:IsHeatBlocked(), "Recovery blocks actions")
 local recoveryEnd = weapon:GetHeatRecoveryEnd()
 now = weapon:GetHeatFixTime() + 0.001
