@@ -319,3 +319,22 @@ tracking. For example, `Angle(0, 0, 10)` adds a ten-degree sideways head tilt.
 The offset uses the tracked look direction's local axes, not the model's head-bone
 axes. It requires `HeadTracksAim = true`; zero preserves the tracked pose. The
 manual offset is applied after the tracking limits, so keep adjustments modest.
+
+Elbow offsets also accept raised/lowered states. They blend with the weapon's
+existing `TPIKTransitionTime` and follow the framework raise state:
+
+```lua
+SWEP.TPIKElbowOffsets = {
+    raised = {
+        left = Vector(0, -5, 3),
+        right = Vector(0, 5, 3),
+    },
+    lowered = {
+        left = Vector(0, -2, -3),
+        right = Vector(0, 2, -3),
+    },
+}
+```
+
+The original top-level `left`/`right` entries remain valid and provide fallback
+raised values. Missing lowered entries inherit the corresponding raised offset.

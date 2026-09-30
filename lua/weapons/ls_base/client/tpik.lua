@@ -85,17 +85,24 @@ function SWEP:GetTPIKHandAngle(side, angle)
     return rotated
 end
 
+--- Blends per-state elbow offsets using the same raised/lowered fraction as the weapon model.
+function SWEP:GetTPIKElbowOffset(side)
+    local offsets = self.TPIKElbowOffsets or {}
+    local key = side == "L" and "left" or "right"
+    local raised = offsets.raised and offsets.raised[key] or offsets[key]
+    if ( !isvector(raised) ) then raised = vector_origin end
+    local lowered = offsets.lowered and offsets.lowered[key]
+    if ( !isvector(lowered) ) then lowered = raised end
+    return LerpVector(self.tpikLoweredAmount or 0, raised, lowered)
+end
+
 --- Offsets each elbow's bend target in player-body forward, right and up axes while leaving the wrist target unchanged.
 function SWEP:GetTPIKElbowHint(owner, side, shoulder, upperLength)
     local right = owner:GetRight()
     local up = owner:GetUp()
     local hint = shoulder + (right * (side == "R" and 1 or -1) - up * 0.75) * upperLength
-    local offsets = self.TPIKElbowOffsets or {}
-    local offset = offsets[side == "L" and "left" or "right"]
-    if ( isvector(offset) ) then
-        hint = hint + owner:GetForward() * offset.x + right * offset.y + up * offset.z
-    end
-    return hint
+    local offset = self:GetTPIKElbowOffset(side)
+    return hint + owner:GetForward() * offset.x + right * offset.y + up * offset.z
 end
 
 --- Applies an animated hand target and solves the player's own arm lengths around it.

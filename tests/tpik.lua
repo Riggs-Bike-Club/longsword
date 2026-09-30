@@ -117,4 +117,16 @@ Check(math.abs(math.AngleDifference(relative.p, 5)) < 0.001 and math.abs(math.An
 Check(look == Angle(20, 110, 0), "Head offsets do not mutate the aim angle")
 head.HeadAimOffset = nil
 Check(head:GetHeadAimAngle(look) == look, "Missing head offsets preserve aim tracking")
+arms.TPIKElbowOffsets = {
+    left = Vector(1, 2, 3),
+    raised = {right = Vector(0, 4, 0)},
+    lowered = {left = Vector(5, 6, 7)},
+}
+arms.tpikLoweredAmount = 0
+Check(arms:GetTPIKElbowOffset("L") == Vector(1, 2, 3), "Raised elbow states inherit legacy per-hand offsets")
+arms.tpikLoweredAmount = 0.5
+Check(arms:GetTPIKElbowOffset("L") == Vector(3, 4, 5), "Elbow state offsets blend with weapon lowering")
+Check(arms:GetTPIKElbowOffset("R") == Vector(0, 4, 0), "Missing lowered elbow offsets inherit raised values")
+arms.tpikLoweredAmount = 1
+Check(arms:GetTPIKElbowOffset("L") == Vector(5, 6, 7), "Fully lowered elbows use the lowered state")
 print("Native TPIK: " .. passed .. " checks passed")
