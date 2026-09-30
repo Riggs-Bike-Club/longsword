@@ -1,11 +1,6 @@
 -- Returns a random inspect animation, preferring the InspectAnimations list and falling back to the single InspectAnimation field.
 function SWEP:GetInspectAnim()
-	local anims = self.InspectAnimations
-	if anims and #anims > 0 then
-		return anims[math.random(#anims)]
-	end
-
-	return self.InspectAnimation
+    return self:GetAnimation("inspect")
 end
 
 --- Starts one interruptible inspect per reload press without locking firing for the animation duration.
@@ -37,12 +32,10 @@ function SWEP:Reload()
         return self:ReloadShotgun()
     end
 
-	self:GetOwner():DoReloadEvent()
+    self:PlayReloadGesture()
 
-	local anim = self.ReloadAnimation or ACT_VM_RELOAD
-	if self.DoEmptyReloadAnim and self:IsClipEmpty() then
-		anim = self.EmptyReloadAnimation or ACT_VM_RELOAD_EMPTY
-	end
+    local bEmptyReload = self:IsClipEmpty() and ( self.DoEmptyReloadAnim or self:GetAnimationDefinition("reloadEmpty") != nil )
+    local anim = self:GetAnimation(bEmptyReload and "reloadEmpty" or "reload")
 
 	self:PlayAnim(anim)
 	self:QueueIdle()

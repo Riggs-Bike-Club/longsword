@@ -19,6 +19,9 @@ local env = setmetatable( {
     isstring = function(value)
         return type( value ) == "string"
     end,
+    istable = function(value)
+        return type(value) == "table"
+    end,
     math = setmetatable( {
         Rand = function(low, high)
             return ( low + high ) / 2

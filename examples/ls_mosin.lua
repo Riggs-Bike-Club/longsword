@@ -104,10 +104,15 @@ SWEP.Attachments = {
 }
 
 SWEP.MuzzleFlashName = "muzzleflash_shotgun"
+SWEP.Animations = {
+    cycle = ACT_VM_PULLBACK_LOW,
+    cycleAimed = ACT_VM_PULLBACK_HIGH,
+}
 
 function SWEP:CustomShootEffects()
     timer.Simple(0.3, function()
-        self:PlayAnim(self:GetIronsights() and ACT_VM_PULLBACK_HIGH or ACT_VM_PULLBACK_LOW)
+        if ( !IsValid(self) ) then return end
+        self:PlayAnim(self:GetPullbackAnimation())
         self:QueueIdle()
     end)
 end

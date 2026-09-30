@@ -20,6 +20,6 @@ function SWEP:ToggleFireMode()
         self:GetOwner():LS_Notify("Changed firemode to " .. data.Name .. ".")
     end
 
-    self:PlayAnim(ACT_VM_FIREMODE)
+    self:PlayAnimation("fireMode")
     self:QueueIdle()
 end

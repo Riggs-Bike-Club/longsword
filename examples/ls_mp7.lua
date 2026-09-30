@@ -19,7 +19,10 @@ SWEP.Slot = 2
 SWEP.SlotPos = 1
 
 SWEP.CSMuzzleFlashes = false
-SWEP.DoEmptyReloadAnim = true 
+SWEP.Animations = {
+    reloadEmpty = ACT_VM_RELOAD_EMPTY,
+    fireAimed = ACT_VM_PRIMARYATTACK_1,
+}
 
 SWEP.EmptySound = Sound("Weapon_AKM.Empty")
 
@@ -54,7 +57,6 @@ SWEP.IronsightsAng = Angle(0.4, 0, 0)
 SWEP.IronsightsFOV = 1
 SWEP.IronsightsSensitivity = 0.8
 SWEP.IronsightsCrosshair = false
-SWEP.IronsightsAnimation = ACT_VM_PRIMARYATTACK_1
 
 SWEP.UseIronsightsRecoil = true
 

@@ -55,17 +55,17 @@ end
 
 -- Returns true when the weapon defines a dedicated ironsights idle to swap to.
 function SWEP:HasIronsightsIdle()
-	return self.IronsightsIdleAnim != nil or self.EmptyIronsightsIdleAnim != nil
+    return self:HasAnimation("idleAimed") or self:HasAnimation("idleAimedEmpty")
 end
 
 -- Returns true when the weapon defines a dedicated walk/sprint loop to swap to, loaded or empty.
 function SWEP:HasMovementAnims()
-	return self.WalkAnim != nil or self.SprintAnim != nil or self.EmptyWalkAnim != nil or self.EmptySprintAnim != nil
+    return self:HasAnimation("walk") or self:HasAnimation("sprint") or self:HasAnimation("walkEmpty") or self:HasAnimation("sprintEmpty")
 end
 
 -- Returns true when the weapon defines any empty-clip counterpart to one of its looping animations.
 function SWEP:HasEmptyLoopAnims()
-	return self.EmptyIdleAnim != nil or self.EmptyIronsightsIdleAnim != nil or self.EmptyWalkAnim != nil or self.EmptySprintAnim != nil
+    return self:HasAnimation("idleEmpty") or self:HasAnimation("idleAimedEmpty") or self:HasAnimation("walkEmpty") or self:HasAnimation("sprintEmpty")
 end
 
 -- Classifies the owner's current movement as "sprint", "walk" or "idle".
@@ -91,13 +91,13 @@ end
 function SWEP:GetIdleAnim()
 	-- A held melee charge owns the loop: any stray idle/movement refresh must hold the charge idle pose, not drop back to walk or standing.
 	if self.Charging and self.MeleeCharge then
-		return self.MeleeCharge.IdleAnim or ACT_VM_ATTACK_CHARGE_IDLE
+        return self:GetAnimation("meleeChargeIdle")
 	end
 
 	local bIronsights = self:GetIronsights()
 
 	if bIronsights then
-		local anim = self:ResolveEmptyAnim(self.IronsightsIdleAnim, self.EmptyIronsightsIdleAnim)
+        local anim = self:GetAnimationVariant("idleAimed", "idleAimedEmpty", self:IsClipEmpty())
 		if anim then
 			return anim
 		end
@@ -107,21 +107,21 @@ function SWEP:GetIdleAnim()
 	if not bIronsights then
 		local state = self:GetMoveState()
 		if state == "sprint" then
-			local anim = self:ResolveEmptyAnim(self.SprintAnim, self.EmptySprintAnim)
+            local anim = self:GetAnimationVariant("sprint", "sprintEmpty", self:IsClipEmpty())
 			if anim then
 				return anim
 			end
 		end
 
 		if state == "walk" then
-			local anim = self:ResolveEmptyAnim(self.WalkAnim, self.EmptyWalkAnim)
+            local anim = self:GetAnimationVariant("walk", "walkEmpty", self:IsClipEmpty())
 			if anim then
 				return anim
 			end
 		end
 	end
 
-	return self:ResolveEmptyAnim(self.IdleAnim, self.EmptyIdleAnim) or ACT_VM_IDLE
+    return self:GetAnimationVariant("idle", "idleEmpty", self:IsClipEmpty())
 end
 
 -- Plays whatever looping anim the current state calls for (idle/walk/sprint/ADS) and syncs the movement and clip trackers to the state the loop was picked for. Deliberately does NOT queue idle: these loops play continuously, so re-queuing would replay them from frame 0 every cycle and snap.

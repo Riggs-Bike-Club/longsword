@@ -64,25 +64,14 @@ SWEP.ImpactSounds = {
     default = "Default.ImpactHard"
 }
 
--- Light-attack swing sequences: an activity, a raw sequence name, or a list of either (one picked at random each swing). Left nil, the swing falls back to ACT_VM_MISSCENTER.
-SWEP.SwingAnims = nil
-
 --- Optional timing overrides keyed by the selected SwingAnims/HitAnims sequence or activity, with Delay, HitDelay and SoundDelay in seconds.
 SWEP.SwingTimings = nil
 
 --- Optional delay for server-owned swing audio when the animation has no sound event; an empty Primary.Sound leaves audio to the model.
 SWEP.Primary.SoundDelay = nil
 
--- Swing sequences played instead of SwingAnims when the swing actually connects, in the same activity / sequence name / list forms. Left nil, a hit looks no different from a miss; set it and every light swing sweeps its hull once before the animation is chosen.
-SWEP.HitAnims = nil
-
--- Shove: a quick right-click tap that plays ShoveAnim and lands a short-range,
--- mostly-cosmetic hit (ShoveDamage defaults to 0 -- it staggers and shoves more
--- than it hurts). Off until ShoveEnabled is set with a ShoveAnim. When the weapon
--- also charges, the tap that would shove and the hold that would charge share the
--- right mouse button.
+--- Shove behavior; the sequence is configured by Animations.meleeShove.
 SWEP.ShoveEnabled = false
-SWEP.ShoveAnim = nil
 SWEP.ShoveDamage = 0
 SWEP.ShoveRange = 45
 SWEP.ShoveHullSize = nil    -- falls back to Primary.HullSize
@@ -98,9 +87,6 @@ SWEP.ShoveSound = nil
 -- SWEP.Spread) so you don't mutate the shared default.
 SWEP.MeleeCharge = {}
 SWEP.MeleeCharge.Enabled = false
-SWEP.MeleeCharge.BeginAnim = ACT_VM_ATTACK_CHARGE_BEGIN
-SWEP.MeleeCharge.IdleAnim = ACT_VM_ATTACK_CHARGE_IDLE
-SWEP.MeleeCharge.EndAnim = ACT_VM_ATTACK_CHARGE_END
 SWEP.MeleeCharge.Threshold = 0.2   -- seconds held below which the release is treated as a shove
 SWEP.MeleeCharge.Time = 1          -- seconds to reach a full-strength charge
 SWEP.MeleeCharge.MinMultiplier = 1 -- damage multiplier at Threshold

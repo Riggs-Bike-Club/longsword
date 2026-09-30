@@ -16,16 +16,16 @@ end
 -- Returns the sequence for a light swing: HitAnims when the swing connected and the weapon defines a set for it, SwingAnims otherwise, falling back to ACT_VM_MISSCENTER. Both fields take an activity, a raw sequence name or a list of either.
 function SWEP:GetSwingAnim(bHit)
     if bHit then
-        local hitAnim = self:PickMeleeAnim( self.HitAnims )
+        local hitAnim = self:GetAnimation("meleeHit")
         if hitAnim then return hitAnim end
     end
 
-    return self:PickMeleeAnim( self.SwingAnims ) or ACT_VM_MISSCENTER
+    return self:GetAnimation("meleeSwing")
 end
 
 -- True when this weapon defines on-hit swing sequences (SWEP.HitAnims), so a swing only pays for the extra hull sweep that tells a hit from a miss when there is a second set to pick from.
 function SWEP:UsesHitAnims()
-    return self.HitAnims != nil
+    return self:HasAnimation("meleeHit")
 end
 
 -- True when this weapon defines the hold-to-charge heavy attack (SWEP.MeleeCharge.Enabled).
@@ -35,7 +35,7 @@ end
 
 -- True when this weapon defines a shove (SWEP.ShoveEnabled + a ShoveAnim).
 function SWEP:UsesShove()
-    return self.ShoveEnabled == true and self.ShoveAnim != nil
+    return self.ShoveEnabled == true and self:HasAnimation("meleeShove")
 end
 
 function SWEP:PrimaryMeleeAttack()
@@ -71,7 +71,7 @@ function SWEP:DoMeleeSwing(anim, damage, range, hullSize, delay)
     self:EmitMeleeSwingSound( self.Primary.Sound, timing.SoundDelay or self.Primary.SoundDelay )
     self:SetNextPrimaryFire( CurTime() + ( delay or timing.Delay or self.Primary.Delay ) )
     self:PlayAnim( anim )
-    self:GetOwner():SetAnimation( PLAYER_ATTACK1 )
+    self:PlayPlayerAnimation("playerAttack")
     self:QueueIdle()
 end
 
@@ -126,7 +126,7 @@ function SWEP:MeleeThink()
 
     -- Held: once the wind-up sequence has finished, settle into the looping charge idle so the pose holds until release.
     if down and self.Charging and !self.ChargeIdlePlayed and CurTime() >= ( self.ChargeBeginEnd or 0 ) then
-        self:PlayAnim( self.MeleeCharge.IdleAnim or ACT_VM_ATTACK_CHARGE_IDLE, true )
+        self:PlayAnimation("meleeChargeIdle", true)
         self.ChargeIdlePlayed = true
     end
 end
@@ -171,7 +171,7 @@ function SWEP:BeginMeleeCharge()
     self.Charging = true
     self.ChargeIdlePlayed = false
 
-    local dur = self:PlayAnim( self.MeleeCharge.BeginAnim or ACT_VM_ATTACK_CHARGE_BEGIN ) or 0
+    local dur = self:PlayAnimation("meleeChargeStart") or 0
     self.ChargeBeginEnd = CurTime() + dur
     self:SetNextPrimaryFire( CurTime() + dur )
 end
@@ -205,8 +205,8 @@ function SWEP:ReleaseMeleeCharge(held)
 
     self:EmitMeleeSwingSound( charge.Sound or self.Primary.Sound, charge.SoundDelay or self.Primary.SoundDelay )
 
-    local dur = self:PlayAnim( charge.EndAnim or ACT_VM_ATTACK_CHARGE_END ) or 0
-    self:GetOwner():SetAnimation( PLAYER_ATTACK1 )
+    local dur = self:PlayAnimation("meleeChargeRelease") or 0
+    self:PlayPlayerAnimation("playerAttack")
     self:SetNextPrimaryFire( CurTime() + dur )
     self:QueueIdle()
 end
@@ -224,8 +224,8 @@ function SWEP:DoShove()
         self:EmitSound( self.ShoveSound )
     end
 
-    local dur = self:PlayAnim( self.ShoveAnim ) or 0
-    self:GetOwner():SetAnimation( PLAYER_ATTACK1 )
+    local dur = self:PlayAnimation("meleeShove") or 0
+    self:PlayPlayerAnimation("playerAttack")
     self:SetNextPrimaryFire( CurTime() + ( self.ShoveDelay or dur ) )
     self:QueueIdle()
 end

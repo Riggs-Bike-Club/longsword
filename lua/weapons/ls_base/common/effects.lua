@@ -39,6 +39,10 @@ function SWEP:ResetCustomRecoil()
 end
 
 function SWEP:ShouldAnimateFire()
+    if ( self.Animations and self.Animations.bAnimateAimedFire != nil ) then
+        return self.Animations.bAnimateAimedFire
+    end
+
 	if self.Recoil then
 		if self.Recoil.DoFireAnim then
 			return true
@@ -62,28 +66,17 @@ function SWEP:PickFireAnim(list, single, fallback)
 end
 
 function SWEP:GetFireAnimation()
-	local bEmpty = self.DoLastFireAnim and self:IsClipEmpty()
+    local bLastShot = self:ShouldAnimateLastShot() and self:IsClipEmpty()
 
-	if self:GetIronsights() then
-		-- The shot that empties the clip has its own aimed sequence too, so it is preferred before the normal aimed fire.
-		if bEmpty and (self.IronsightsLastFireAnims or self.IronsightsLastFireAnim) then
-			return self:PickFireAnim(self.IronsightsLastFireAnims, self.IronsightsLastFireAnim)
-		end
+    if ( self:GetIronsights() ) then
+        return self:GetAnimationVariant("fireAimed", "fireAimedLast", bLastShot)
+    end
 
-		local iron = self.IronsightsAnimation
-		if istable(iron) then
-			return self:PickFireAnim(iron, nil, ACT_VM_PRIMARYATTACK_1)
-		end
+    if ( bLastShot ) then
+        return self:GetAnimation("fireLast")
+    end
 
-		return iron or ACT_VM_PRIMARYATTACK_1
-	end
-
-	-- The shot that empties the clip: viewmodels that lock the slide back animate it as a separate sequence (one per fire variant, hence the list) rather than as part of the normal fire animation.
-	if bEmpty then
-		return self:PickFireAnim(self.LastFireAnims, self.LastFireAnim, ACT_VM_PRIMARYATTACK_EMPTY)
-	end
-
-	return self:PickFireAnim(self.FireAnims, self.FireAnim, ACT_VM_PRIMARYATTACK)
+    return self:GetAnimation("fire")
 end
 
 local smoke = Material("sprites/smoke")
@@ -153,8 +146,8 @@ function SWEP:ShootEffects()
     if not self.MuzzleEffect then
         self:GetOwner():MuzzleFlash()
     end
-	self:PlayAnimWorld(ACT_VM_PRIMARYATTACK)
-	self:GetOwner():SetAnimation(PLAYER_ATTACK1)
+    self:PlayAnimWorld(self:GetAnimation("worldFire"))
+    self:PlayPlayerAnimation("playerAttack")
 
 	-- The fire animation queues its own idle above. Queueing a second one here measured whatever the viewmodel happened to be playing, so a shot that plays no fire animation at all (ironsighted, with UseIronsightsRecoil driving the recoil procedurally) queued an idle the full length of the idle loop it was already in -- several seconds during which the weapon counted as mid-animation and refused to swap loops, so the slide stayed forward after the last round.
 	if self.CustomShootEffects then
@@ -180,7 +173,7 @@ end
 
 function SWEP:ShouldPullback()
 	-- The shot that empties the clip plays a dedicated last-fire sequence that already cocks the action (or locks the bolt open), so a normal pump on top of it would double the motion.
-	if self.DoLastFireAnim and self:IsClipEmpty() then
+    if ( self:ShouldAnimateLastShot() and self:IsClipEmpty() ) then
 		return false
 	end
 
@@ -200,23 +193,15 @@ function SWEP:GetPullbackDelay()
 end
 
 function SWEP:GetPullbackAnimation()
-	local pullback = self.Pullback
+    if ( self:GetIronsights() and self:GetAnimationDefinition("cycleAimed") != nil ) then
+        return self:GetAnimation("cycleAimed")
+    end
 
-	if pullback then
-		if pullback.Anims and #pullback.Anims > 0 then
-			return pullback.Anims[math.random(#pullback.Anims)]
-		end
+    if ( self:GetAnimationDefinition("cycle") == nil and self.GetPumpAnimation ) then
+        return self:GetPumpAnimation()
+    end
 
-		if pullback.Anim then
-			return pullback.Anim
-		end
-	end
-
-	if self.GetPumpAnimation then
-		return self:GetPumpAnimation()
-	end
-
-	return self.PumpAnimation or ACT_VM_PULLBACK
+    return self:GetAnimation("cycle")
 end
 
 function SWEP:DoPullback()

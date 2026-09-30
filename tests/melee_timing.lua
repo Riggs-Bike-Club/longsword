@@ -27,6 +27,9 @@ local env = {
     istable = function(value)
         return type(value) == "table"
     end,
+    isstring = function(value)
+        return type(value) == "string"
+    end,
     Lerp = function(fraction, low, high)
         return low + fraction * (high - low)
     end,
@@ -54,6 +57,10 @@ setmetatable(env, {
     end,
 })
 
+local animationFile = assert(io.open("lua/weapons/ls_base/common/animation.lua", "r"))
+local animationSource = animationFile:read("*a"):gsub("!=", "~="):gsub("!", "not ")
+animationFile:close()
+assert(load(animationSource, "animation.lua", "t", env))()
 assert(load(source, "melee.lua", "t", env))()
 local passed = 0
 local function Check(value, message)

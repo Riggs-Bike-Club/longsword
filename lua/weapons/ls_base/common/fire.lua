@@ -92,7 +92,7 @@ function SWEP:PrimaryAttack()
 		self:Shoot()
 		self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 	else
-		if not self.NoDryFireAnim then
+        if ( !self.NoDryFireAnim and self:GetDryFireAnim() != nil ) then
 			if self.HammerDown == true then return end
 			self:PlayAnim(self:GetDryFireAnim())
 			self:QueueIdle()

@@ -2,6 +2,8 @@
 -- Created by vin, modified by bingu and maintained by Riggs.
 
 SWEP.IsLongsword = true
+--- Animation actions accept an activity, a sequence name, a variant list, or false to disable; omitted actions use centralized defaults.
+SWEP.Animations = {}
 SWEP.PrintName = "Longsword"
 SWEP.Category = "LS"
 SWEP.DrawWeaponInfoBox = false
@@ -56,99 +58,8 @@ SWEP.scopedIn = SWEP.scopedIn or false
 SWEP.LoweredPos = nil
 SWEP.LoweredAng = nil
 
--- Idle animations played while iron-sighted. When set, they replace the normal
--- idle for as long as the weapon is aimed down sights, and are played the moment
--- the player enters or leaves ironsights (so the swap is instant rather than
--- waiting for the next idle cycle). Both accept an activity (ACT_VM_*) or a raw
--- sequence name string; leave nil to keep using the standard idle.
--- EmptyIronsightsIdleAnim takes priority while the clip is empty, falling back to
--- IronsightsIdleAnim when it is not set.
-SWEP.IronsightsIdleAnim = nil
-SWEP.EmptyIronsightsIdleAnim = nil
-
--- Looping viewmodel animations played while the owner is on the move. WalkAnim
--- covers normal ground movement and SprintAnim covers sprinting; each swaps in
--- the instant the movement state changes and falls back to the standard idle
--- when nil. Both accept an activity (ACT_VM_*) or a raw sequence name string.
--- They never interrupt a draw, fire or reload -- the matching loop is picked up
--- once that animation finishes. Aiming down sights suspends them: the weapon
--- drops to IronsightsIdleAnim, or to the standard idle when it has none, so the
--- hands never keep walking or sprinting while the player stands still aimed.
-SWEP.WalkAnim = nil
-SWEP.SprintAnim = nil
-
--- The standing idle. IdleAnim is the loop the weapon settles into whenever it is
--- neither moving nor aimed, defaulting to ACT_VM_IDLE.
-SWEP.IdleAnim = nil
-
--- Empty-clip counterparts to the loops above, for viewmodels that animate the
--- slide or bolt locked back (idle_empty, walk_empty, sprint_empty). Each is used
--- in place of its loaded variant for as long as the clip reads 0 and falls back
--- to that variant when nil, so a weapon only has to declare the empty sequences
--- its model actually ships. The swap follows the clip rather than the animation
--- that changed it: firing the last round, finishing a reload or having ammo
--- handed over all re-pick the loop on the spot.
-SWEP.EmptyIdleAnim = nil
-SWEP.EmptyWalkAnim = nil
-SWEP.EmptySprintAnim = nil
-
--- Draw animations. DrawAnim is played on deploy (default ACT_VM_DRAW) and
--- EmptyDrawAnim replaces it while the clip is empty. NoDrawAnim skips both.
-SWEP.DrawAnim = nil
-SWEP.EmptyDrawAnim = nil
-
---- Maximum firing delay after drawing; the draw animation continues until another action interrupts it.
+--- Maximum firing delay after drawing; the cosmetic sequence may continue until another action interrupts it.
 SWEP.DrawDelay = 0.25
-
--- Holster animations, off by default. Playing one means holding the weapon
--- switch back until the animation finishes, so weapons opt in with DoHolsterAnim
--- and the switch goes through the moment it ends. HolsterAnim picks the sequence
--- and EmptyHolsterAnim replaces it while the clip is empty; with neither set the
--- switch stays instant. Death, dropping the weapon and switching with nothing to
--- switch to all bypass the delay.
-SWEP.DoHolsterAnim = false
-SWEP.HolsterAnim = nil
-SWEP.EmptyHolsterAnim = nil
-
--- Reload animations. ReloadAnimation is the normal one (default ACT_VM_RELOAD);
--- with DoEmptyReloadAnim set, a reload started on an empty clip plays
--- EmptyReloadAnimation (default ACT_VM_RELOAD_EMPTY) instead, which is the one
--- that drops the slide or charges the bolt at the end.
-SWEP.DoEmptyReloadAnim = false
-SWEP.ReloadAnimation = nil
-SWEP.EmptyReloadAnimation = nil
-
--- The shot that empties the clip. With DoLastFireAnim set it plays a dedicated
--- animation instead of the normal fire one -- LastFireAnims picks at random from
--- a list (one per fire variant, matching FireAnims), LastFireAnim is the
--- single-sequence form, and ACT_VM_PRIMARYATTACK_EMPTY is the fallback. The
--- Ironsights* forms below are the aimed counterparts, used only when the shot is
--- animated down the sights (Recoil.DoFireAnim); with none set the aimed
--- last-shot falls back to the normal aimed fire.
-SWEP.DoLastFireAnim = false
-SWEP.LastFireAnim = nil
-SWEP.LastFireAnims = nil
-SWEP.IronsightsLastFireAnim = nil
-SWEP.IronsightsLastFireAnims = nil
-
--- Animation played when the trigger is pulled on an empty chamber, defaulting to
--- ACT_VM_DRYFIRE. IronsightsDryFireAnim replaces it while aimed when set.
--- NoDryFireAnim suppresses it entirely.
-SWEP.DryFireAnim = nil
-SWEP.IronsightsDryFireAnim = nil
-
--- Shell-by-shell (shotgun) reload sequences, used when SWEP.Shotgun is set. The
--- reload runs an opening rack, one insert per shell and a closing rack; each
--- stage takes a named-sequence or activity override, and the *Empty forms are
--- swapped in when the tube started empty (bolt locked open). Left nil, the stages
--- keep the activities the reload used before (ACT_SHOTGUN_RELOAD_START /
--- ACT_VM_RELOAD / ACT_SHOTGUN_RELOAD_FINISH), so a shotgun with a single reload
--- set is unaffected.
-SWEP.ShotgunReloadStartAnim = nil
-SWEP.ShotgunReloadStartEmptyAnim = nil
-SWEP.ShotgunReloadInsertAnim = nil
-SWEP.ShotgunReloadEndAnim = nil
-SWEP.ShotgunReloadEndEmptyAnim = nil
 
 -- When the empty-start reload animation loads a round directly into the chamber, set this so that shell is credited as the rack plays -- unlike CanChamberShotgun it does not raise the clip size, for tubes (like the M590) whose ClipSize already counts the chambered round.
 SWEP.ShotgunEmptyChambers = false
@@ -163,14 +74,6 @@ SWEP.MoveAnimDebounce = 0.1
 -- only on animated weapons). Raise toward 1 to layer some procedural bob back on
 -- top. No effect on weapons without WalkAnim/SprintAnim.
 SWEP.MoveAnimBobScale = 0
-
--- Inspect animations. InspectAnimations is a list (one is chosen at random) and
--- InspectAnimation is a single-sequence fallback; both accept an activity
--- (ACT_VM_*) or a raw sequence name string. They drive the manual inspect (press
--- reload on a full clip) and, when AutoInspect is enabled, the random idle
--- inspect below.
-SWEP.InspectAnimation = nil
-SWEP.InspectAnimations = nil
 
 -- Extra cooldown (seconds) after a manual inspect (reload on a full clip) before
 -- another may play, on top of the animation's own length. Holding reload only
@@ -192,18 +95,11 @@ SWEP.InspectSound = nil
 SWEP.BobScale = 0
 SWEP.SwayScale = 0
 
--- Pullback (pump) animations.
--- A short viewmodel animation played a moment after each shot, used by pump
--- shotguns, lever-/bolt-action rifles and other manually-cycled weapons.
--- Override the WHOLE table in your weapon (like SWEP.Spread) rather than a
--- single field, so you don't mutate the shared base default.
-SWEP.Pullback = {}
-SWEP.Pullback.Enabled = false             -- play a pullback animation after firing
-SWEP.Pullback.Delay = 0.5                 -- extra seconds added on top of the fire animation's duration
-SWEP.Pullback.Anims = { ACT_VM_PULLBACK } -- one is chosen at random each shot; accepts activities or raw sequence ids
-SWEP.Pullback.Sound = nil                 -- optional sound emitted with the animation
--- For per-shot custom logic (e.g. different anims while ironsighted) override
--- SWEP:GetPullbackAnimation() instead.
+--- Mechanical cycling behavior; animation sources belong in Animations.cycle and Animations.cycleAimed.
+SWEP.Pullback = {
+    Enabled = false,
+    Delay = 0.5,
+}
 
 function SWEP:SetupDataTables()
 	self:NetworkVar("Bool", 0, "Ironsights")
@@ -392,7 +288,7 @@ function SWEP:Deploy()
 	-- A holster animation cut short by a fresh deploy (dying mid-switch, an admin forcing the weapon back out) would otherwise leave the marker behind and block the next holster for its duration.
 	self.HolsterAnimEnd = nil
 
-	if not self.NoDrawAnim then
+    if ( !self.NoDrawAnim and self:GetDrawAnim() != nil ) then
 		-- PlayAnim returns nil for a viewmodel that lacks the draw sequence (e.g. the first aid kit has no ACT_VM_DRAW), so fall back to 0 to avoid arithmetic on nil.
 		local dur = self:PlayAnim(self:GetDrawAnim()) or 0
 
@@ -414,7 +310,9 @@ end
 
 -- Plays the holster animation and defers the weapon switch until it has finished, returning true once the switch may go ahead. The engine tears the viewmodel down the moment Holster() succeeds, so the animation is only ever seen if the switch is cancelled and re-issued afterwards -- which is what the timer below does. Anything the player cannot be left stuck in the middle of (no animation, no weapon to switch to, dead, dropped) passes straight through.
 function SWEP:HandleHolsterAnim(wep)
-	if not self.DoHolsterAnim then return true end
+    if ( !self:ShouldAnimateHolster() ) then
+        return true
+    end
 
 	local anim = self:GetHolsterAnim()
 	if not anim then return true end

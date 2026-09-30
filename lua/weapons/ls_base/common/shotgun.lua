@@ -6,25 +6,21 @@ end
 
 -- Opening rack. Falls back to the legacy ACT_VM_RELOAD_EMPTY only for chambering shotguns, which is where that activity was hardcoded before.
 function SWEP:GetShotgunReloadStartAnim()
-    if self:IsClipEmpty() then
-        return self.ShotgunReloadStartEmptyAnim or (self.CanChamberShotgun and ACT_VM_RELOAD_EMPTY) or self.ShotgunReloadStartAnim or ACT_SHOTGUN_RELOAD_START
+    if ( self:IsClipEmpty() and self:GetAnimationDefinition("reloadStartEmpty") == nil and self.CanChamberShotgun ) then
+        return self:GetAnimation("reloadChamber")
     end
 
-    return self.ShotgunReloadStartAnim or ACT_SHOTGUN_RELOAD_START
+    return self:GetAnimationVariant("reloadStart", "reloadStartEmpty", self:IsClipEmpty())
 end
 
 -- Single-shell insert, replayed once per shell.
 function SWEP:GetShotgunReloadInsertAnim()
-    return self.ShotgunReloadInsertAnim or ACT_VM_RELOAD
+    return self:GetAnimation("reloadInsert")
 end
 
 -- Closing rack. The choice follows whether the tube was empty when the reload BEGAN (tracked in ReloadStartedEmpty), not its state now -- by the time it finishes the tube is full either way, but only the reload that started empty needs the round chambered at the end.
 function SWEP:GetShotgunReloadEndAnim()
-    if self.ReloadStartedEmpty and self.ShotgunReloadEndEmptyAnim then
-        return self.ShotgunReloadEndEmptyAnim
-    end
-
-    return self.ShotgunReloadEndAnim or ACT_SHOTGUN_RELOAD_FINISH
+    return self:GetAnimationVariant("reloadFinish", "reloadFinishEmpty", self.ReloadStartedEmpty == true)
 end
 
 function SWEP:ReloadShotgun()
@@ -38,7 +34,7 @@ function SWEP:ReloadShotgun()
         self:GetOwner():RemoveAmmo( 1, self:GetPrimaryAmmoType() )
     end
 
-    self:GetOwner():DoReloadEvent()
+    self:PlayReloadGesture()
     self:QueueIdle()
 
     self:SetReloading( true )
