@@ -252,6 +252,10 @@ weapon.Overheat = true
 weapon.SprintToFireTime = 0.35
 weapon:SetupDataTables()
 Check(weapon.slots.Bool == 7 and weapon.slots.Float == 10, "Enabled features reserve their slots before derived weapons")
+registered = {}
+weapon.TPIK = true
+weapon:SetupDataTables()
+Check(weapon.slots.Float == 11 and weapon.slots.String == 2, "TPIK reserves animation state before derived weapon slots")
 weapon, owner = NewWeapon()
 weapon.Bash = true
 weapon.BashSecondary = true

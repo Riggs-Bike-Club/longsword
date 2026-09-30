@@ -189,7 +189,12 @@ function SWEP:PlayAnim(act, bKeepCycle)
         vmodel:SetCycle(cycle)
     end
     self:StartAnimationEvents(act, cycle)
-    return vmodel:SequenceDuration(seq)
+    local duration = vmodel:SequenceDuration(seq)
+    if ( self.TPIK and self.SetTPIKSequenceName and (SERVER or IsFirstTimePredicted()) ) then
+        self:SetTPIKSequenceName(vmodel:GetSequenceName(seq))
+        self:SetTPIKSequenceStart(CurTime() - (cycle or 0) * duration)
+    end
+    return duration
 end
 
 --- Emits animation audio locally for the predicted owner and to other listeners from the server.

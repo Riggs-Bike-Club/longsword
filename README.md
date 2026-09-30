@@ -217,3 +217,43 @@ Additional regression checks:
 lua tests/heat_trigger.lua
 lua tests/directional_recoil.lua
 ```
+
+### Optional third-person IK
+
+Set `SWEP.TPIK = true` on a compatible weapon. Other weapons retain their normal
+world models. The HMG port enables this with per-weapon offsets.
+Clients can use `longsword_tpik 0` to disable it, `longsword_tpik_others 0` to skip
+other players, or `longsword_tpik_distance 1500` to set the distance cutoff.
+
+```lua
+SWEP.TPIK = true
+SWEP.TPIKOffset = {
+    Pos = Vector(-12.5, 10, -2.5),
+    Ang = Angle(20, 0, 150),
+    Scale = 1,
+}
+```
+
+TPIK uses `ViewModel` (or `TPIKModel`) as an animated third-person model and
+matches its ValveBiped hand/finger bones to the player's skeleton. Use a model
+whose visible geometry is appropriate for third person: baked-in arms are not
+removed automatically. `TPIKOffset` uses ARC9's right-hand axes and rotation
+order, independently of `WMOffset`. `TPIKAnchor` can select another player bone;
+`TPIKNoLeftHand = true` leaves the support arm alone. `TPIKIdleSequence` defaults
+to `idle`. Missing bones or sequences fall back to normal world-model rendering.
+Dropped weapons also use their normal world model.
+
+Selected animation names and start times replicate through optional weapon
+DataTable slots, including reload, bash, trigger and heat transitions. Respawn
+weapons when changing the `TPIK` flag so their DataTables are rebuilt. Both realms
+need the updated base and the animation model. Bone changes are render-only;
+models are removed when the weapon becomes inactive, is removed or leaves range.
+
+This is a Longsword implementation of [ARC9's TPIK approach](https://github.com/HaodongMo/ARC-9),
+with animated hand targets and a two-segment arm solver. It does not require ARC9.
+ARC9 attachment IK, custom pose layers and its animation-pack-specific offsets
+are not imported. Configure and check offsets for each model and player rig.
+
+Run the standard Lua regression scripts for replicated animation state. Run
+`tests/tpik.lua` in the Garry's Mod client Lua realm for the native Vector solver
+checks; it does not run in standalone Lua 5.4.

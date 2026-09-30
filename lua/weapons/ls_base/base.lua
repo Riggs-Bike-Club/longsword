@@ -4,6 +4,8 @@
 SWEP.IsLongsword = true
 --- Animation actions accept an activity, a sequence name, a variant list, or false to disable; omitted actions use centralized defaults.
 SWEP.Animations = {}
+--- Opt-in third-person arm IK; the animated model must contain matching ValveBiped hand bones.
+SWEP.TPIK = false
 SWEP.PrintName = "Longsword"
 SWEP.Category = "LS"
 SWEP.DrawWeaponInfoBox = false
@@ -133,6 +135,12 @@ function SWEP:SetupDataTables()
     end
     if ( self.SprintToFireTime ) then
         self:NetworkVar("Float", slots.Float + 1, "SprintReadyTime")
+        slots.Float = slots.Float + 1
+    end
+    if ( self.TPIK ) then
+        self:NetworkVar("String", slots.String + 1, "TPIKSequenceName")
+        self:NetworkVar("Float", slots.Float + 1, "TPIKSequenceStart")
+        slots.String = slots.String + 1
         slots.Float = slots.Float + 1
     end
     if ( self.ExtraDataTables ) then

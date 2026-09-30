@@ -336,4 +336,18 @@ env.SERVER = true
 env.CLIENT = false
 weapon:PlayAnim("reload")
 Check(#sounds == previousSounds + 3 and sounds[#sounds].filter == nil, "Singleplayer server includes the owner")
+weapon.TPIK = true
+function viewModel:GetSequenceName(sequence) return "resolved_" .. sequence end
+function weapon:SetTPIKSequenceName(name) self.tpikName = name end
+function weapon:SetTPIKSequenceStart(time) self.tpikStart = time end
+weapon:PlayAnim("reload")
+Check(weapon.tpikName == "resolved_3" and weapon.tpikStart == 100, "TPIK replicates resolved animation names and start times")
+weapon:PlayAnim("reload", true)
+Check(weapon.tpikStart == 100 - viewModel.cycle * 2, "TPIK preserves animation loop phase")
+env.SERVER = false
+env.CLIENT = true
+bFirstPrediction = false
+weapon.tpikStart = 42
+weapon:PlayAnim("reload")
+Check(weapon.tpikStart == 42, "Prediction replays do not restart TPIK timing")
 print("Animation configuration: " .. passed .. " checks passed")

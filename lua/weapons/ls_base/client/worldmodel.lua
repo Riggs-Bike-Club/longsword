@@ -104,6 +104,7 @@ function SWEP:DrawWMElement(data, root)
 end
 
 function SWEP:DrawWorldModel( f )
+    if ( self:DrawTPIKWorldModel() ) then return end
 	local offset = self.WMOffset
 	if not offset then
 		return self:DrawModel( f )
