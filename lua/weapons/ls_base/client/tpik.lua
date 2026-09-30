@@ -85,6 +85,19 @@ function SWEP:GetTPIKHandAngle(side, angle)
     return rotated
 end
 
+--- Offsets each elbow's bend target in player-body forward, right and up axes while leaving the wrist target unchanged.
+function SWEP:GetTPIKElbowHint(owner, side, shoulder, upperLength)
+    local right = owner:GetRight()
+    local up = owner:GetUp()
+    local hint = shoulder + (right * (side == "R" and 1 or -1) - up * 0.75) * upperLength
+    local offsets = self.TPIKElbowOffsets or {}
+    local offset = offsets[side == "L" and "left" or "right"]
+    if ( isvector(offset) ) then
+        hint = hint + owner:GetForward() * offset.x + right * offset.y + up * offset.z
+    end
+    return hint
+end
+
 --- Applies an animated hand target and solves the player's own arm lengths around it.
 function SWEP:ApplyTPIKArm(owner, model, side)
     local prefix = "ValveBiped.Bip01_" .. side
@@ -98,8 +111,7 @@ function SWEP:ApplyTPIKArm(owner, model, side)
     local originalElbow = lowerMatrix:GetTranslation()
     local originalHand = handMatrix:GetTranslation()
     local upperLength = shoulder:Distance(originalElbow)
-    local outward = owner:GetRight() * (side == "R" and 1 or -1)
-    local hint = shoulder + (outward - owner:GetUp() * 0.75) * upperLength
+    local hint = self:GetTPIKElbowHint(owner, side, shoulder, upperLength)
     local fingers = {}
     for finger = 0, 4 do
         for _, suffix in ipairs({"", "1", "2"}) do

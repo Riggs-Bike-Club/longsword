@@ -93,4 +93,20 @@ for _, side in ipairs({"L", "R"}) do
 end
 grips.TPIKHandAngles = nil
 Check(grips:GetTPIKHandAngle("L", sourceAngle) == sourceAngle, "Unconfigured hand angles preserve the animation")
+local body = {}
+function body:GetForward() return Vector(1, 0, 0) end
+function body:GetRight() return Vector(0, -1, 0) end
+function body:GetUp() return Vector(0, 0, 1) end
+local arms = setmetatable({}, {__index = base})
+local defaultHint = arms:GetTPIKElbowHint(body, "L", shoulder, 5)
+arms.TPIKElbowOffsets = {left = Vector(2, -3, 4)}
+local adjustedHint = arms:GetTPIKElbowHint(body, "L", shoulder, 5)
+Check((adjustedHint - defaultHint):Distance(Vector(2, 3, 4)) < 0.001, "Elbow offsets use body forward, right and up axes")
+local target = shoulder + Vector(6, 0, 0)
+local beforeElbow, beforeWrist = arms:SolveTPIKArm(shoulder, target, defaultHint, 5, 3)
+local afterElbow, afterWrist = arms:SolveTPIKArm(shoulder, target, adjustedHint, 5, 3)
+Check(beforeElbow:Distance(afterElbow) > 0.1, "Elbow offset changes arm posture")
+Check(beforeWrist:Distance(afterWrist) < 0.001, "Changing elbow posture leaves the wrist target fixed")
+Check(math.abs(shoulder:Distance(afterElbow) - 5) < 0.001 and math.abs(afterElbow:Distance(afterWrist) - 3) < 0.001, "Elbow tuning retains both limb lengths")
+Check(arms:GetTPIKElbowHint(body, "R", shoulder, 5):Distance(shoulder + Vector(0, -5, -3.75)) < 0.001, "One arm's offset does not affect the other")
 print("Native TPIK: " .. passed .. " checks passed")

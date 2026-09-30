@@ -295,3 +295,21 @@ SWEP.TPIKHandAngles = {
 These offsets rotate the animated hand and its fingers without moving the wrist
 target. Omit either hand to retain its authored orientation. Arm rotations preserve
 the player rig's bone axes and scale; finger animation retains player finger lengths.
+
+Adjust whole-arm posture with per-arm elbow bend targets:
+
+```lua
+SWEP.TPIKElbowOffsets = {
+    left = Vector(0, -5, 3),
+    right = Vector(0, 5, 3),
+}
+```
+
+Components are **forward, player-right, up**, in Source units relative to the
+player's body. Positive Y moves either target toward the player's right: use
+negative Y for the left elbow outward and positive Y for the right elbow outward.
+Positive Z raises the bend target. Zero retains the default posture. These steer
+the IK bend direction; they are not direct translations of the final elbow.
+The solver preserves arm lengths and the same reachable wrist target. A fully
+extended arm has little room to change posture. Hand-angle adjustments remain
+independent and only change the grip rotation.
