@@ -1,5 +1,5 @@
 -- The main file, containing the base data for longsword. 
--- Created by vin and modified by bingu.
+-- Created by vin, modified by bingu and maintained by Riggs.
 
 SWEP.IsLongsword = true
 SWEP.PrintName = "Longsword"
