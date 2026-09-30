@@ -24,9 +24,13 @@ function SWEP:PrimaryProjectileAttack()
         self:ViewPunch()
     end
 
-    if self.Primary.Sound != "" then
-        self:EmitSound( self.Primary.Sound )
-    end
+	if istable(self.Primary.Sound) then
+		self:EmitSound(self.Primary.Sound[math.random(#self.Primary.Sound)])
+	elseif isstring(self.Primary.Sound) then
+		self:EmitSound(self.Primary.Sound)
+	elseif isfunction(self.Primary.Sound) then
+		self.Primary.Sound()
+	end
 
     self:SetNextPrimaryFire( CurTime() + self.Primary.Delay )
 

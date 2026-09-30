@@ -309,7 +309,13 @@ function SWEP:OnReloaded()
 end
 
 function SWEP:EmitWeaponSound(snd, lvl, pitch, vol)
-	self:EmitSound(snd, lvl or 60, pitch or 100, vol or 1, CHAN_AUTO)
+	if istable(snd) then
+		self:EmitSound(snd[math.random(#snd)], lvl or 60, pitch or 100, vol or 1, CHAN_AUTO)
+	elseif isstring(snd) then
+		self:EmitSound(snd, lvl or 60, pitch or 100, vol or 1, CHAN_AUTO)
+	elseif isfunction(snd) then
+		snd()
+	end
 end
 
 function SWEP:DrawWeaponSelection()
