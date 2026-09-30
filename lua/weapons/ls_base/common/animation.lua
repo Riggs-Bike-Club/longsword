@@ -188,7 +188,52 @@ function SWEP:PlayAnim(act, bKeepCycle)
     if ( cycle ) then
         vmodel:SetCycle(cycle)
     end
+    self:StartAnimationEvents(act, cycle)
     return vmodel:SequenceDuration(seq)
+end
+
+--- Dispatches a server-side animation event while its weapon, owner and playback remain active.
+---@realm server
+---@param owner Player
+---@param serial number
+---@param event table Timed sound or callback definition.
+function SWEP:RunAnimationEvent(owner, serial, event)
+    if ( !SERVER or !IsValid(self) or self.animationEventSerial != serial ) then return end
+    if ( !IsValid(owner) or !owner:Alive() or self:GetOwner() != owner ) then return end
+    if ( owner:GetActiveWeapon() != self ) then return end
+
+    if ( event.sound ) then
+        self:EmitWeaponSound(event.sound, event.level, event.pitch, event.volume)
+    end
+    if ( isfunction(event.callback) ) then
+        event.callback(self, event)
+    end
+end
+
+--- Schedules AnimationEvents keyed by the selected sequence name or activity; preserved loops cancel without replaying events.
+---@realm shared
+---@param animation string|number Selected sequence name or activity constant.
+---@param cycle? number Preserved loop phase.
+function SWEP:StartAnimationEvents(animation, cycle)
+    if ( !SERVER ) then return end
+
+    self.animationEventSerial = (self.animationEventSerial or 0) + 1
+    if ( cycle != nil or !self.AnimationEvents ) then return end
+
+    local serial = self.animationEventSerial
+    local owner = self:GetOwner()
+    for _, event in ipairs(self.AnimationEvents[animation] or {}) do
+        local delay = math.max(event.time or 0, 0)
+        if ( delay == 0 ) then
+            self:RunAnimationEvent(owner, serial, event)
+        else
+            timer.Simple(delay, function()
+                if ( IsValid(self) ) then
+                    self:RunAnimationEvent(owner, serial, event)
+                end
+            end)
+        end
+    end
 end
 
 --- Reports whether a magazine is empty; clipless weapons report -1 and are never empty.

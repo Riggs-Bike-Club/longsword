@@ -233,4 +233,61 @@ weapon.Animations.fireMode = false
 Check(weapon:GetAnimation("fireMode") == nil, "Fire-mode animation can be disabled")
 weapon.Animations.worldFire = "worldShot"
 Check(weapon:GetAnimation("worldFire") == "worldShot", "World firing sources are configurable")
+local timers = {}
+env.timer = { Simple = function(delay, callback)
+    timers[#timers + 1] = {delay = delay, callback = callback}
+end }
+env.isfunction = function(value)
+    return type(value) == "function"
+end
+function owner:Alive()
+    return not self.dead
+end
+function owner:GetActiveWeapon()
+    return self.activeWeapon
+end
+owner.activeWeapon = weapon
+local sounds = {}
+function weapon:EmitWeaponSound(sound, level, pitch, volume)
+    sounds[#sounds + 1] = {sound, level, pitch, volume}
+end
+local callbacks = 0
+weapon.AnimationEvents = {
+    reload = {
+        {time = 0, sound = "start", level = 70, pitch = 95, volume = 0.5},
+        {time = 0.5, sound = "finish", callback = function(self)
+            Check(self == weapon, "Callbacks receive the weapon")
+            callbacks = callbacks + 1
+        end},
+    },
+}
+weapon:PlayAnim("reload")
+Check(#sounds == 1 and sounds[1][2] == 70 and sounds[1][3] == 95 and sounds[1][4] == 0.5, "Immediate events preserve sound options")
+Check(#timers == 1 and timers[1].delay == 0.5, "Delayed events use seconds")
+timers[1].callback()
+Check(#sounds == 2 and callbacks == 1, "Delayed sounds and callbacks execute")
+weapon:PlayAnim("reload")
+weapon:PlayAnim("idle")
+timers[#timers].callback()
+Check(#sounds == 3, "Animations without events cancel previous events")
+weapon:PlayAnim("reload")
+owner.activeWeapon = nil
+timers[#timers].callback()
+Check(#sounds == 4, "Switching weapons suppresses pending events")
+owner.activeWeapon = weapon
+weapon:PlayAnim("reload")
+owner.dead = true
+timers[#timers].callback()
+Check(#sounds == 5, "Death suppresses pending events")
+owner.dead = false
+weapon:PlayAnim("reload", true)
+Check(#sounds == 5, "Preserved loops do not replay events")
+env.SERVER = false
+weapon:PlayAnim("reload")
+Check(#sounds == 5, "Client prediction does not duplicate server events")
+env.SERVER = true
+weapon:PlayAnim("reload")
+weapon.removed = true
+timers[#timers].callback()
+Check(#sounds == 6, "Removed weapons do not dispatch events")
 print("Animation configuration: " .. passed .. " checks passed")

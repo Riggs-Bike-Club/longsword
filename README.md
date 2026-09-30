@@ -106,6 +106,35 @@ and activity maps. Legacy animation fields remain supported, but explicit unifie
 entries take priority. Action timing, sound, damage, and movement tuning remain in
 their existing behavior settings; animation sources belong only in this table.
 
+### Animation events
+
+Define `SWEP.AnimationEvents` using the actual sequence name or activity constant
+passed to `PlayAnim`, including sources selected through `SWEP.Animations`:
+
+```lua
+SWEP.AnimationEvents = {
+    reload_empty = {
+        {time = 20 / 30, sound = "weapons/rifle/magout.wav"},
+        {time = 53 / 30, sound = "weapons/rifle/magin.wav", volume = 0.8},
+    },
+    [ACT_VM_DRAW] = {
+        {time = 0, sound = "weapons/rifle/draw.wav"},
+    },
+}
+```
+
+`time` is seconds from playback start (default zero). Sounds accept a path or a
+random-choice list, with optional `level`, `pitch`, and `volume`. An optional
+`callback = YourNamedFunction` receives `(weapon, event)` at the same time.
+Events run only on the server; sounds are broadcast through `EmitWeaponSound`,
+avoiding duplicate predicted playback. Both server and clients need the model.
+Starting another valid animation cancels pending events. Events also check that
+the original owner is alive and still holding the weapon. Preserving a loop's
+cycle cancels pending events without replaying them. Timings assume normal
+playback speed. Existing model-authored events and generic deploy sounds remain
+enabled; avoid defining duplicates (override `GetDeploySound` when needed).
+This is Longsword's event format, not a drop-in ARC9/TFA table parser.
+
 Regression checks can be run from the addon root with Lua 5.4:
 
 ```text
