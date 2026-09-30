@@ -247,9 +247,19 @@ function owner:GetActiveWeapon()
     return self.activeWeapon
 end
 owner.activeWeapon = weapon
+env.game = { SinglePlayer = function() return false end }
+env.LocalPlayer = function() return owner end
+local bFirstPrediction = true
+env.IsFirstTimePredicted = function() return bFirstPrediction end
+local recipients = {}
+env.RecipientFilter = function() return recipients end
+function recipients:AddPAS(position) self.position = position end
+function recipients:RemovePlayer(player) self.excluded = player end
+function owner:IsPlayer() return true end
+function weapon:GetPos() return "weapon position" end
 local sounds = {}
-function weapon:EmitWeaponSound(sound, level, pitch, volume)
-    sounds[#sounds + 1] = {sound, level, pitch, volume}
+function weapon:EmitSound(sound, level, pitch, volume, channel, flags, dsp, filter)
+    sounds[#sounds + 1] = {sound, level, pitch, volume, filter = filter}
 end
 local callbacks = 0
 weapon.AnimationEvents = {
@@ -301,4 +311,29 @@ weapon.AnimationEvents.spindown = {
 weapon:PlayAnim("spindown")
 Check(stopped[1] == "windup" and stopped[2] == "motor", "Animation transitions stop named sound layers")
 Check(sounds[#sounds][1] == "winddown", "Replacement audio starts with the transition")
+Check(sounds[#sounds].filter == recipients and recipients.excluded == owner, "Server audio excludes the predicting owner")
+env.SERVER = false
+env.CLIENT = true
+local previousSounds = #sounds
+local previousCallbacks = callbacks
+weapon:PlayAnim("reload")
+Check(#sounds == previousSounds + 1 and sounds[#sounds].filter == nil, "Owner hears predicted event audio locally")
+local serial = weapon.animationEventSerial
+bFirstPrediction = false
+weapon:PlayAnim("reload")
+Check(weapon.animationEventSerial == serial and #sounds == previousSounds + 1, "Prediction replays neither duplicate audio nor cancel pending events")
+timers[#timers].callback()
+Check(#sounds == previousSounds + 2 and callbacks == previousCallbacks, "Client delayed audio plays without running server callbacks")
+bFirstPrediction = true
+env.LocalPlayer = function() return {} end
+weapon:PlayAnim("reload")
+Check(#sounds == previousSounds + 2, "Other clients do not predict owner audio")
+env.LocalPlayer = function() return owner end
+env.game.SinglePlayer = function() return true end
+weapon:PlayAnim("reload")
+Check(#sounds == previousSounds + 2, "Singleplayer client leaves audio to the server")
+env.SERVER = true
+env.CLIENT = false
+weapon:PlayAnim("reload")
+Check(#sounds == previousSounds + 3 and sounds[#sounds].filter == nil, "Singleplayer server includes the owner")
 print("Animation configuration: " .. passed .. " checks passed")

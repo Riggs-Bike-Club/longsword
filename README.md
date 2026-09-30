@@ -126,8 +126,9 @@ SWEP.AnimationEvents = {
 `time` is seconds from playback start (default zero). Sounds accept a path or a
 random-choice list, with optional `level`, `pitch`, and `volume`. An optional
 `callback = YourNamedFunction` receives `(weapon, event)` at the same time.
-Events run only on the server; sounds are broadcast through `EmitWeaponSound`,
-avoiding duplicate predicted playback. Both server and clients need the model.
+Sounds play once on the predicting owner; the server sends audio to other nearby
+players. Singleplayer audio and all callbacks run on the server. Both server and
+clients need the model. Prediction replays do not restart the event scheduler.
 Starting another valid animation cancels pending events. Events also check that
 the original owner is alive and still holding the weapon. Preserving a loop's
 cycle cancels pending events without replaying them. Timings assume normal

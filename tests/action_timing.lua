@@ -4,6 +4,7 @@ local now = 100
 local env = setmetatable( {
     SWEP = methods,
     CLIENT = false,
+    game = { SinglePlayer = function() return true end },
     IN_SPEED = 1,
     IN_WALK = 2,
     IN_ATTACK = 3,

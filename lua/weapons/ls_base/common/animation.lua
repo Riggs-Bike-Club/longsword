@@ -192,13 +192,34 @@ function SWEP:PlayAnim(act, bKeepCycle)
     return vmodel:SequenceDuration(seq)
 end
 
---- Dispatches a server-side animation event while its weapon, owner and playback remain active.
----@realm server
+--- Emits animation audio locally for the predicted owner and to other listeners from the server.
+---@realm shared
+---@param owner Player
+---@param event table
+function SWEP:EmitAnimationEventSound(owner, event)
+    local soundName = event.sound
+    if ( istable(soundName) ) then
+        if ( #soundName == 0 ) then return end
+        soundName = soundName[math.random(#soundName)]
+    end
+    if ( !isstring(soundName) ) then return end
+
+    local recipients
+    if ( SERVER and !game.SinglePlayer() and owner:IsPlayer() ) then
+        recipients = RecipientFilter()
+        recipients:AddPAS(self:GetPos())
+        recipients:RemovePlayer(owner)
+    end
+    self:EmitSound(soundName, event.level or 60, event.pitch or 100, event.volume or 1, CHAN_AUTO, 0, 0, recipients)
+end
+
+--- Dispatches animation audio in its playback realm and callbacks only on the server.
+---@realm shared
 ---@param owner Player
 ---@param serial number
 ---@param event table Timed sound or callback definition.
 function SWEP:RunAnimationEvent(owner, serial, event)
-    if ( !SERVER or !IsValid(self) or self.animationEventSerial != serial ) then return end
+    if ( !IsValid(self) or self.animationEventSerial != serial ) then return end
     if ( !IsValid(owner) or !owner:Alive() or self:GetOwner() != owner ) then return end
     if ( owner:GetActiveWeapon() != self ) then return end
 
@@ -208,9 +229,9 @@ function SWEP:RunAnimationEvent(owner, serial, event)
         end
     end
     if ( event.sound ) then
-        self:EmitWeaponSound(event.sound, event.level, event.pitch, event.volume)
+        self:EmitAnimationEventSound(owner, event)
     end
-    if ( isfunction(event.callback) ) then
+    if ( SERVER and isfunction(event.callback) ) then
         event.callback(self, event)
     end
 end
@@ -220,7 +241,11 @@ end
 ---@param animation string|number Selected sequence name or activity constant.
 ---@param cycle? number Preserved loop phase.
 function SWEP:StartAnimationEvents(animation, cycle)
-    if ( !SERVER ) then return end
+    if ( CLIENT ) then
+        if ( game.SinglePlayer() or self:GetOwner() != LocalPlayer() or !IsFirstTimePredicted() ) then return end
+    elseif ( !SERVER ) then
+        return
+    end
 
     self.animationEventSerial = (self.animationEventSerial or 0) + 1
     if ( cycle != nil or !self.AnimationEvents ) then return end
