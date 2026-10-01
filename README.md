@@ -306,7 +306,7 @@ SWEP.TPIKElbowOffsets = {
 ```
 
 Components are **forward, player-right, up**, in Source units relative to the
-player's body. Positive Y moves either target toward the player's right: use
+player's rendered body, independent of their eye/aim angles. Positive Y moves either target toward the player's right: use
 negative Y for the left elbow outward and positive Y for the right elbow outward.
 Positive Z raises the bend target. Zero retains the default posture. These steer
 the IK bend direction; they are not direct translations of the final elbow.

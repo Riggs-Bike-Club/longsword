@@ -94,6 +94,7 @@ end
 grips.TPIKHandAngles = nil
 Check(grips:GetTPIKHandAngle("L", sourceAngle) == sourceAngle, "Unconfigured hand angles preserve the animation")
 local body = {}
+function body:GetRenderAngles() return angle_zero end
 function body:GetForward() return Vector(1, 0, 0) end
 function body:GetRight() return Vector(0, -1, 0) end
 function body:GetUp() return Vector(0, 0, 1) end
@@ -129,4 +130,25 @@ Check(arms:GetTPIKElbowOffset("L") == Vector(3, 4, 5), "Elbow state offsets blen
 Check(arms:GetTPIKElbowOffset("R") == Vector(0, 4, 0), "Missing lowered elbow offsets inherit raised values")
 arms.tpikLoweredAmount = 1
 Check(arms:GetTPIKElbowOffset("L") == Vector(5, 6, 7), "Fully lowered elbows use the lowered state")
+arms.TPIKElbowOffsets = {left = Vector(2, -3, 4), right = Vector(-1, 3, -2)}
+arms.tpikLoweredAmount = 0
+for _, side in ipairs({"L", "R"}) do
+    local reference = arms:GetTPIKElbowHint(body, side, vector_origin, 5)
+    for yaw = -180, 180, 30 do
+        local rendered = Angle(0, yaw, 0)
+        local turningBody = {}
+        function turningBody:GetRenderAngles() return rendered end
+        function turningBody:GetForward() error("Elbow target must not use player entity aim axes") end
+        function turningBody:GetRight() error("Elbow target must not use player entity aim axes") end
+        function turningBody:GetUp() error("Elbow target must not use player entity aim axes") end
+        local rotated = arms:GetTPIKElbowHint(turningBody, side, shoulder, 5)
+        local expected = LocalToWorld(reference, angle_zero, shoulder, rendered)
+        Check(rotated:Distance(expected) < 0.001, "Elbow posture follows rendered body yaw independently of aim direction")
+        local target = LocalToWorld(Vector(6, 0, 0), angle_zero, shoulder, rendered)
+        local elbow, wrist = arms:SolveTPIKArm(shoulder, target, rotated, 5, 3)
+        local originalElbow = arms:SolveTPIKArm(vector_origin, Vector(6, 0, 0), reference, 5, 3)
+        local expectedElbow = LocalToWorld(originalElbow, angle_zero, shoulder, rendered)
+        Check(elbow:Distance(expectedElbow) < 0.001 and wrist:Distance(target) < 0.001, "Turning preserves the solved elbow posture and grip")
+    end
+end
 print("Native TPIK: " .. passed .. " checks passed")
