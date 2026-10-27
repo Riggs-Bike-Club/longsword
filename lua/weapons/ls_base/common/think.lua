@@ -281,7 +281,7 @@ end
 
 function SWEP:IdleThink()
     if ( self:GetNextIdle() == 0 ) then
-        if ( self.idleLoopEnd and CurTime() >= self.idleLoopEnd ) then
+        if ( self:GetIdleLoopEnd() > 0 and CurTime() >= self:GetIdleLoopEnd() ) then
             self:ResumeIdleLoop()
         end
         return

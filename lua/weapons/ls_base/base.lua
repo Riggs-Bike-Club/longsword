@@ -110,6 +110,7 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Bool", 2, "Bursting")
     self:NetworkVar("Bool", 3, "Lowered")
     self:NetworkVar("String", 0, "CurAttachment")
+    self:NetworkVar("Float", 0, "IdleLoopEnd")
     self:NetworkVar("Float", 1, "IronsightsRecoil")
     self:NetworkVar("Float", 2, "Recoil")
     self:NetworkVar("Float", 3, "ReloadTime")
@@ -149,6 +150,10 @@ function SWEP:SetupDataTables()
 end
 
 function SWEP:ResetValues()
+    if ( !self.SetIdleLoopEnd ) then
+        self:NetworkVar("Float", 0, "IdleLoopEnd")
+    end
+    self:SetIdleLoopEnd(0)
     self:ResetTriggerDelay()
     if ( self.Overheat ) then
         self:SetHeatFixTime(0)

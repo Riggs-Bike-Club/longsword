@@ -183,8 +183,14 @@ function SWEP:PlayAnim(act, bKeepCycle, bLoop)
         return longsword.debugPrint("Attempting to play invalid sequence " .. tostring(act) .. " on " .. self:GetClass() .. "!")
     end
     local cycle = bKeepCycle and vmodel:GetCycle() or nil
+    if ( cycle != nil and self:GetIdleLoopEnd() > 0 ) then
+        local duration = vmodel:SequenceDuration()
+        if ( duration > 0 ) then
+            cycle = math.Clamp(1 - (self:GetIdleLoopEnd() - CurTime()) / duration, 0, 1)
+        end
+    end
     self.Inspecting = false
-    self.idleLoopEnd = nil
+    self:SetIdleLoopEnd(0)
     vmodel:ResetSequenceInfo()
     vmodel:SendViewModelMatchingSequence(seq)
     if ( cycle ) then
@@ -195,7 +201,7 @@ function SWEP:PlayAnim(act, bKeepCycle, bLoop)
     if ( bLoop and duration > 0 ) then
         local sequenceInfo = vmodel:GetSequenceInfo(seq)
         if ( sequenceInfo and bit.band(sequenceInfo.flags, 1) == 0 ) then
-            self.idleLoopEnd = CurTime() + duration * (1 - (cycle or 0))
+            self:SetIdleLoopEnd(CurTime() + duration * (1 - (cycle or 0)))
         end
     end
     if ( self.TPIK and self.SetTPIKSequenceName and (SERVER or IsFirstTimePredicted()) ) then
