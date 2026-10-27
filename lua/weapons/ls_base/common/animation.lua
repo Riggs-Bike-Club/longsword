@@ -164,12 +164,13 @@ function SWEP:PlayReloadGesture()
     self:GetOwner():DoReloadEvent()
 end
 
---- Plays an activity or sequence on the owner's viewmodel, optionally preserving its normalized loop phase.
+--- Plays an activity or sequence on the owner's viewmodel, optionally preserving its phase and repeating sequences without a native loop flag.
 ---@realm shared
 ---@param act string|number|nil Sequence name or activity.
 ---@param bKeepCycle? boolean Preserve the loop phase.
+---@param bLoop? boolean Restart a non-looping sequence when it finishes.
 ---@return number|nil duration Sequence duration in seconds.
-function SWEP:PlayAnim(act, bKeepCycle)
+function SWEP:PlayAnim(act, bKeepCycle, bLoop)
     if ( act == nil or act == false ) then
         return
     end
@@ -183,6 +184,7 @@ function SWEP:PlayAnim(act, bKeepCycle)
     end
     local cycle = bKeepCycle and vmodel:GetCycle() or nil
     self.Inspecting = false
+    self.idleLoopEnd = nil
     vmodel:ResetSequenceInfo()
     vmodel:SendViewModelMatchingSequence(seq)
     if ( cycle ) then
@@ -190,6 +192,12 @@ function SWEP:PlayAnim(act, bKeepCycle)
     end
     self:StartAnimationEvents(act, cycle)
     local duration = vmodel:SequenceDuration(seq)
+    if ( bLoop and duration > 0 ) then
+        local sequenceInfo = vmodel:GetSequenceInfo(seq)
+        if ( sequenceInfo and bit.band(sequenceInfo.flags, 1) == 0 ) then
+            self.idleLoopEnd = CurTime() + duration * (1 - (cycle or 0))
+        end
+    end
     if ( self.TPIK and self.SetTPIKSequenceName and (SERVER or IsFirstTimePredicted()) ) then
         self:SetTPIKSequenceName(vmodel:GetSequenceName(seq))
         self:SetTPIKSequenceStart(CurTime() - (cycle or 0) * duration)

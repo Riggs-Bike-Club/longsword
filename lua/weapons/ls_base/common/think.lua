@@ -127,9 +127,9 @@ function SWEP:GetIdleAnim()
     return self:GetAnimationVariant("idle", "idleEmpty", self:IsClipEmpty())
 end
 
--- Plays whatever looping anim the current state calls for (idle/walk/sprint/ADS) and syncs the movement and clip trackers to the state the loop was picked for. Deliberately does NOT queue idle: these loops play continuously, so re-queuing would replay them from frame 0 every cycle and snap.
+--- Plays the current idle or movement loop, repeating non-looping sequences without reserving the action timer.
 function SWEP:ResumeIdleLoop(bKeepCycle)
-	self:PlayAnim( self:GetIdleAnim(), bKeepCycle )
+    self:PlayAnim(self:GetIdleAnim(), bKeepCycle, true)
 	self.LastMoveState = self:GetMoveState()
 	self.PendingMoveState = nil
 	self.LastEmptyState = self:IsClipEmpty()
@@ -280,7 +280,12 @@ function SWEP:InspectThink()
 end
 
 function SWEP:IdleThink()
-	if self:GetNextIdle() == 0 then return end
+    if ( self:GetNextIdle() == 0 ) then
+        if ( self.idleLoopEnd and CurTime() >= self.idleLoopEnd ) then
+            self:ResumeIdleLoop()
+        end
+        return
+    end
 
 	if CurTime() > self:GetNextIdle() then
 		self:SetNextIdle( 0 )
