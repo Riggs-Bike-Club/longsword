@@ -290,4 +290,30 @@ Check(hitCount == 1 and hitDamage == 50, "Bash deals its own configured damage")
 owner.weapon = nil
 bashTimer()
 Check(hitCount == 1, "A switched weapon cannot deal a delayed bash hit")
+weapon, owner = NewWeapon()
+weapon.TriggerDelay = false
+weapon.BottomlessClip = false
+weapon.Overheat = false
+weapon.clip = 0
+weapon.EmptySound = "empty"
+weapon.EmptySoundLevel = 75
+weapon.DryFireDelay = 0.5
+local clicks = {}
+
+function weapon:EmitWeaponSound(name, level)
+    clicks[#clicks + 1] = {name = name, level = level}
+end
+
+function weapon:GetDryFireAnim() return "dry" end
+function weapon:PlayAnim(name) self.animations[#self.animations + 1] = name end
+
+now = 100
+weapon:PrimaryAttack()
+Check(#clicks == 1 and clicks[1].name == "empty" and clicks[1].level == 75, "An empty weapon clicks at its carrying sound level")
+Check(weapon.animations[#weapon.animations] == "dry" and weapon:GetNextPrimaryFire() == 100.5, "A dry click animates and waits its configured delay")
+now = 100.5
+weapon:PrimaryAttack()
+now = 101
+weapon:PrimaryAttack()
+Check(#clicks == 3 and weapon.shots == 0, "An empty weapon keeps clicking on every pull without a reload in between")
 print("Heat and trigger: " .. passed .. " checks passed")

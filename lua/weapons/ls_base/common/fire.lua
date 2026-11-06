@@ -139,24 +139,27 @@ function SWEP:PrimaryAttack()
 		self:Shoot()
 		self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 	else
-        if ( self.BottomlessClip ) then
-            self:ResetTriggerDelay()
-            self:EmitWeaponSound(self.EmptySound)
-        end
-        if ( !self.NoDryFireAnim and self:GetDryFireAnim() != nil ) then
-			if self.HammerDown == true then return end
-			self:PlayAnim(self:GetDryFireAnim())
-			self:QueueIdle()
-
-			if self.EmptySound then
-				self:EmitWeaponSound(self.EmptySound)
-			end
-
-			self.HammerDown = true
-		end
-
-		self:SetNextPrimaryFire(CurTime() + 1)
+        self:DryFire()
 	end
+end
+
+--- Clicks an empty weapon on every trigger pull, repeating while the trigger is held. The click runs in the predicted attack, so the owner hears it at once and the server plays it to everyone else in earshot.
+---@realm shared
+function SWEP:DryFire()
+    if ( self.BottomlessClip ) then
+        self:ResetTriggerDelay()
+    end
+
+    if ( self.EmptySound ) then
+        self:EmitWeaponSound(self.EmptySound, self.EmptySoundLevel)
+    end
+
+    if ( !self.NoDryFireAnim and self:GetDryFireAnim() != nil ) then
+        self:PlayAnim(self:GetDryFireAnim())
+        self:QueueIdle()
+    end
+
+    self:SetNextPrimaryFire(CurTime() + (self.DryFireDelay or 0.5))
 end
 
 function SWEP:Shoot()

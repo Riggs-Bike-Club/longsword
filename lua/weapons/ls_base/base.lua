@@ -39,6 +39,10 @@ SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
 
 SWEP.EmptySound = Sound("Weapon_Pistol.Empty")
+--- Sound level of the empty click, loud enough that people nearby can hear a weapon run dry.
+SWEP.EmptySoundLevel = 75
+--- Seconds between empty clicks while the trigger stays held.
+SWEP.DryFireDelay = 0.5
 
 SWEP.Spread = {}
 SWEP.Spread.Min = 0
