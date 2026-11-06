@@ -4,6 +4,7 @@ function SWEP:GetAvailablePrimaryAmmo()
     if ( self.BottomlessClip ) then
         return self:Ammo1() + math.max(self:Clip1(), 0)
     end
+
     return self:Clip1()
 end
 
@@ -36,6 +37,7 @@ function SWEP:TriggerThink()
     if ( self.SprintToFireTime and self:IsSprinting() ) then
         self:SetSprintReadyTime(CurTime() + self.SprintToFireTime)
     end
+
     if ( !self.TriggerDelay or self:GetTriggerReadyTime() == 0 ) then return end
 
     local owner = self:GetOwner()
@@ -46,20 +48,24 @@ function SWEP:TriggerThink()
 
     if ( self.HolsterAnimEnd or self:GetReloading() or self:GetLowered() or self:IsSprinting() or self:IsHeatBlocked() ) then
         self:ResetTriggerDelay()
+
         if ( !self.HolsterAnimEnd and !self:IsHeatBlocked() and !self:GetReloading() ) then
             self:PlayAnimation("untrigger")
             self:QueueIdle()
         end
+
         return
     end
 
     if ( !owner:KeyDown(IN_ATTACK) or self:GetAvailablePrimaryAmmo() <= 0 ) then
         local bFired = self:GetTriggerFired()
         self:ResetTriggerDelay()
+
         if ( !bFired or self.TriggerReleaseAnimation ) then
             self:PlayAnimation("untrigger")
             self:QueueIdle()
         end
+
         return
     end
 

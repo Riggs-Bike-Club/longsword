@@ -35,6 +35,7 @@ end
 for _, fName in pairs(file.Find("weapons/ls_base/client/*.lua", "LUA")) do
     local fP = "client/" .. fName
     AddCSLuaFile(fP)
+
     if CLIENT then
         include(fP)
     end

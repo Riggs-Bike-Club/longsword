@@ -51,18 +51,23 @@ local function Weapon()
         speed = 300,
         grounded = true,
     }
+
     function owner:KeyDown(key)
         return self.keys[key] == true
     end
+
     function owner:GetVelocity()
         return { Length2D = function() return self.speed end }
     end
+
     function owner:GetRunSpeed()
         return 300
     end
+
     function owner:IsOnGround()
         return self.grounded
     end
+
     function owner:Crouching()
         return self.crouched == true
     end
@@ -71,17 +76,22 @@ local function Weapon()
     function viewModel:LookupSequence(anim)
         return anim
     end
+
     function viewModel:ResetSequenceInfo()
     end
+
     function viewModel:SendViewModelMatchingSequence(anim)
         self.anim = anim
     end
+
     function viewModel:SequenceDuration()
         return self.duration
     end
+
     function viewModel:GetCycle()
         return 0.5
     end
+
     function viewModel:SetCycle(cycle)
         self.cycle = cycle
     end
@@ -97,48 +107,63 @@ local function Weapon()
         reloadTime = 0,
         clip = 12,
     }, { __index = methods } )
+
     function weapon:GetOwner()
         return owner
     end
+
     function weapon:GetOwnerViewModel()
         return viewModel
     end
+
     function weapon:GetBursting()
         return self.bursting == true
     end
+
     function weapon:GetReloading()
         return self.reloading == true
     end
+
     function weapon:GetReloadTime()
         return self.reloadTime
     end
+
     function weapon:GetLowered()
         return false
     end
+
     function weapon:GetIronsights()
         return self.aiming == true
     end
+
     function weapon:GetNextPrimaryFire()
         return self.nextFire
     end
+
     function weapon:GetNextIdle()
         return self.nextIdle
     end
+
     function weapon:SetNextIdle(value)
         self.nextIdle = value
     end
+
     function weapon:Clip1()
         return self.clip
     end
+
     function weapon:UsesMeleeAttack()
         return false
     end
+
     function weapon:UsesShotgunReload()
         return false
     end
+
     function weapon:Ammo1()
         return 24
     end
+
     return weapon, owner, viewModel
 end
 
@@ -178,6 +203,7 @@ Check( not weapon.Inspecting and viewModel.anim == "idle", "Attack must cancel m
 
 for _, bClient in ipairs( { false, true } ) do
     env.CLIENT = bClient
+
     for _, key in ipairs( { env.IN_ATTACK, env.IN_ATTACK2, env.IN_USE } ) do
         weapon, owner, viewModel = Weapon()
         owner.speed = 0
@@ -187,6 +213,7 @@ for _, bClient in ipairs( { false, true } ) do
         Check( not weapon.Inspecting and viewModel.anim == "idle", "Action input must interrupt inspect in both realms" )
     end
 end
+
 env.CLIENT = false
 
 for _, anim in ipairs( { "fire", "reload", "holster" } ) do

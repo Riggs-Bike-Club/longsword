@@ -4,6 +4,7 @@ function SWEP:GetCurrentHeat()
     if ( !self.Overheat ) then return 0 end
 
     local elapsed = math.max(CurTime() - self:GetHeatDecayTime(), 0)
+
     return math.max(self:GetHeatAmount() - elapsed * (self.HeatDissipation or 25), 0)
 end
 
@@ -15,6 +16,7 @@ function SWEP:AddShotHeat()
     local heat = math.min(self:GetCurrentHeat() + (self.HeatPerShot or 1), capacity)
     self:SetHeatAmount(heat)
     self:SetHeatDecayTime(CurTime() + self.Primary.Delay + (self.HeatDelayTime or 0.25))
+
     if ( heat >= capacity ) then
         self:SetOverheated(self:HasAnimation("fix"))
         self:SetHeatLocked(self.HeatLockout == true)
@@ -33,6 +35,7 @@ function SWEP:HeatThink()
     if ( !self.Overheat ) then return end
 
     local now = CurTime()
+
     if ( self:GetHeatLocked() and self:GetCurrentHeat() <= 0 ) then
         self:SetHeatLocked(false)
     end
@@ -40,6 +43,7 @@ function SWEP:HeatThink()
     if ( self:GetHeatFixTime() > 0 and now >= self:GetHeatFixTime() ) then
         self:SetHeatFixTime(0)
         self:SetOverheated(false)
+
         if ( self.HeatFix ) then
             self:SetHeatAmount(0)
             self:SetHeatLocked(false)

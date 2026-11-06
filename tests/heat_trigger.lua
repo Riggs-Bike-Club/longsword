@@ -49,14 +49,17 @@ local function NewWeapon()
         animations = {},
         values = {},
     }, {__index = methods})
+
     for _, name in ipairs({"TriggerReadyTime", "HeatAmount", "HeatDecayTime", "HeatFixTime", "HeatRecoveryEnd", "NextPrimaryFire", "ReloadTime", "NextIdle", "SprintReadyTime"}) do
         weapon["Get" .. name] = function(self) return self.values[name] or 0 end
         weapon["Set" .. name] = function(self, value) self.values[name] = value end
     end
+
     for _, name in ipairs({"TriggerFired", "Overheated", "HeatLocked", "SemiAutomatic", "Ironsights", "Reloading", "Lowered", "Bursting"}) do
         weapon["Get" .. name] = function(self) return self.values[name] == true end
         weapon["Set" .. name] = function(self, value) self.values[name] = value end
     end
+
     function owner:Alive() return not self.dead end
     function owner:KeyDown(key) return key == env.IN_ATTACK and self.bHeld end
     function owner:GetActiveWeapon() return self.weapon end
@@ -71,10 +74,12 @@ local function NewWeapon()
     function weapon:UsesProjectileAttack() return false end
     function weapon:IsSprinting() return self.bSprinting == true end
     function weapon:HasAnimation(name) return name == "fix" end
+
     function weapon:PlayAnimation(name)
         self.animations[#self.animations + 1] = name
         return name == "fix" and 5 / 3 or 1
     end
+
     function weapon:QueueIdle() self:SetNextIdle(now + 1) end
     function weapon:ShootBullet() self.shots = self.shots + 1 end
     function weapon:CalculateSpread() return 0 end
@@ -82,6 +87,7 @@ local function NewWeapon()
     function weapon:ViewPunch() end
     function weapon:GetDryFireAnim() return nil end
     function weapon:EmitWeaponSound() end
+
     return weapon, owner
 end
 
@@ -105,10 +111,12 @@ now = 13.25
 weapon:TriggerThink()
 Check(weapon.shots == 1 and owner.ammo == 199, "First shot fires at 1.25 seconds and consumes reserve ammo")
 Check(weapon:GetCurrentHeat() == 1, "One shot adds one heat")
+
 for _ = 2, 75 do
     now = now + 60 / 700 + 0.00001
     weapon:PrimaryAttack()
 end
+
 Check(weapon.shots == 75 and owner.ammo == 125, "Automatic fire continues without repeated wind-up")
 Check(weapon:GetCurrentHeat() == 75 and weapon:GetOverheated(), "The 75th uninterrupted shot overheats")
 Check(not weapon:GetHeatLocked(), "HeatLockout false retains animated recovery")
@@ -240,6 +248,7 @@ function weapon:NetworkVar(kind, slot, name)
     Check(registered[key] == nil, "Network slots do not overlap: " .. name)
     registered[key] = name
 end
+
 function weapon:ExtraDataTables(slots) self.slots = slots end
 weapon.TriggerDelay = false
 weapon.Overheat = false
@@ -262,14 +271,17 @@ weapon.BashSecondary = true
 local bashTimer
 local hitCount = 0
 local hitDamage
+
 function weapon:ClubAttack(damage)
     hitCount = hitCount + 1
     hitDamage = damage
 end
+
 env.timer = {Simple = function(delay, callback)
     Check(delay == 0.5, "Bash impact uses its separate delay")
     bashTimer = callback
 end}
+
 weapon:SecondaryAttack()
 Check(hitCount == 0 and weapon.animations[#weapon.animations] == "bash", "Bash animation starts before damage")
 Check(owner.ammo == 200 and weapon.shots == 0, "Bashing does not consume ammunition or fire")

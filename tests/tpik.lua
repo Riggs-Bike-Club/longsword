@@ -16,6 +16,7 @@ for _, target in ipairs({Vector(16, 20, 30), Vector(10, 20, 36), Vector(100, 20,
     Check(math.abs(elbow:Distance(wrist) - 3) < 0.001, "Forearm length is preserved")
     Check(shoulder:Distance(wrist) <= 8, "Unreachable targets cannot stretch the arm")
 end
+
 local elbow, wrist = base:SolveTPIKArm(shoulder, Vector(16, 20, 30), Vector(10, 25, 30), 5, 3)
 Check(wrist:Distance(Vector(16, 20, 30)) < 0.001, "Reachable hands meet their animation target")
 Check(elbow.y > shoulder.y, "The bend hint chooses the elbow side")
@@ -61,6 +62,7 @@ if ( IsValid(owner) and isfunction(owner.IsWeaponRaised) ) then
     weapon.bLowered = owner:IsWeaponRaised()
     Check(weapon:IsTPIKLowered() == !owner:IsWeaponRaised(), "Framework raise state overrides conflicting standalone state")
 end
+
 local pose = Matrix()
 pose:SetTranslation(Vector(7, 8, 9))
 pose:SetAngles(Angle(23, 41, 67))
@@ -76,6 +78,7 @@ for _, desired in ipairs({original, -original, Vector(0, 0, 1), Vector(1, 0, 0),
     Check(rotated:GetTranslation():Distance(pose:GetTranslation()) < 0.001, "Bone rotation preserves its position")
     Check(rotated:GetScale():Distance(pose:GetScale()) < 0.001, "Bone rotation preserves player rig scale")
 end
+
 for yaw = -180, 180, 30 do
     for pitch = -85, 85, 17 do
         local target = shoulder + Angle(pitch, yaw, 0):Forward() * 7
@@ -83,6 +86,7 @@ for yaw = -180, 180, 30 do
         Check(math.abs(shoulder:Distance(elbow) - 5) < 0.001 and math.abs(elbow:Distance(wrist) - 3) < 0.001, "Aim sweep preserves both limb lengths")
     end
 end
+
 local grips = setmetatable({TPIKHandAngles = {left = Angle(0, 0, 25), right = Angle(10, 0, 0)}}, {__index = base})
 local sourceAngle = Angle(20, 50, 70)
 for _, side in ipairs({"L", "R"}) do
@@ -91,6 +95,7 @@ for _, side in ipairs({"L", "R"}) do
     local expected = grips.TPIKHandAngles[side == "L" and "left" or "right"]
     Check(math.abs(math.AngleDifference(offset.p, expected.p)) < 0.001 and math.abs(math.AngleDifference(offset.r, expected.r)) < 0.001, "Each grip adjustment rotates in its own animated hand axes")
 end
+
 grips.TPIKHandAngles = nil
 Check(grips:GetTPIKHandAngle("L", sourceAngle) == sourceAngle, "Unconfigured hand angles preserve the animation")
 local body = {}
@@ -132,6 +137,7 @@ arms.tpikLoweredAmount = 1
 Check(arms:GetTPIKElbowOffset("L") == Vector(5, 6, 7), "Fully lowered elbows use the lowered state")
 arms.TPIKElbowOffsets = {left = Vector(2, -3, 4), right = Vector(-1, 3, -2)}
 arms.tpikLoweredAmount = 0
+
 for _, side in ipairs({"L", "R"}) do
     local reference = arms:GetTPIKElbowHint(body, side, vector_origin, 5)
     for yaw = -180, 180, 30 do
@@ -151,4 +157,5 @@ for _, side in ipairs({"L", "R"}) do
         Check(elbow:Distance(expectedElbow) < 0.001 and wrist:Distance(target) < 0.001, "Turning preserves the solved elbow posture and grip")
     end
 end
+
 print("Native TPIK: " .. passed .. " checks passed")

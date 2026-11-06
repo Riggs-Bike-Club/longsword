@@ -27,19 +27,23 @@ function SWEP:SolveTPIKArm(shoulder, target, hint, upperLength, lowerLength)
         bend = direction:Cross(vector_up)
         if ( bend:LengthSqr() < 0.001 ) then bend = direction:Cross(Vector(0, 1, 0)) end
     end
+
     bend:Normalize()
+
     return shoulder + direction * along + bend * height, shoulder + direction * length
 end
 
 --- Rotates a posed bone between limb directions without discarding its authored axes or twist.
 function SWEP:RotateTPIKBone(matrix, original, desired)
     if ( original:LengthSqr() < 0.000001 or desired:LengthSqr() < 0.000001 ) then return Matrix(matrix) end
+
     local from = original:GetNormalized()
     local to = desired:GetNormalized()
     local dot = math.Clamp(from:Dot(to), -1, 1)
     local axis = from:Cross(to)
     local pose = Matrix(matrix)
     if ( dot > 0.999999 ) then return pose end
+
     if ( axis:LengthSqr() < 0.000001 ) then
         axis = matrix:GetUp()
         axis = axis - from * axis:Dot(from)
@@ -48,6 +52,7 @@ function SWEP:RotateTPIKBone(matrix, original, desired)
             if ( axis:LengthSqr() < 0.000001 ) then axis = from:Cross(vector_up) end
         end
     end
+
     axis:Normalize()
     local angle = Angle()
     angle:RotateAroundAxis(axis, math.deg(math.acos(dot)))
@@ -55,6 +60,7 @@ function SWEP:RotateTPIKBone(matrix, original, desired)
     rotation:SetAngles(angle)
     pose = rotation * matrix
     pose:SetTranslation(matrix:GetTranslation())
+
     return pose
 end
 
@@ -62,14 +68,17 @@ end
 local function MoveBone(owner, index, matrix, stop)
     local original = owner:GetBoneMatrix(index)
     if ( !original ) then return end
+
     local inverse = original:GetInverse()
     if ( !inverse ) then return end
+
     local delta = matrix * inverse
     local pending = {index}
     while ( #pending > 0 ) do
         local bone = table.remove(pending)
         local current = owner:GetBoneMatrix(bone)
         if ( current ) then owner:SetBoneMatrix(bone, delta * current) end
+
         for _, child in ipairs(owner:GetChildBones(bone) or {}) do
             if ( child != stop ) then pending[#pending + 1] = child end
         end
@@ -81,7 +90,9 @@ function SWEP:GetTPIKHandAngle(side, angle)
     local offsets = self.TPIKHandAngles or {}
     local offset = offsets[side == "L" and "left" or "right"]
     if ( !isangle(offset) ) then return Angle(angle) end
+
     local _, rotated = LocalToWorld(vector_origin, offset, vector_origin, angle)
+
     return rotated
 end
 
@@ -93,6 +104,7 @@ function SWEP:GetTPIKElbowOffset(side)
     if ( !isvector(raised) ) then raised = vector_origin end
     local lowered = offsets.lowered and offsets.lowered[key]
     if ( !isvector(lowered) ) then lowered = raised end
+
     return LerpVector(self.tpikLoweredAmount or 0, raised, lowered)
 end
 
@@ -103,6 +115,7 @@ function SWEP:GetTPIKElbowHint(owner, side, shoulder, upperLength)
     local up = bodyAngle:Up()
     local hint = shoulder + (right * (side == "R" and 1 or -1) - up * 0.75) * upperLength
     local offset = self:GetTPIKElbowOffset(side)
+
     return hint + bodyAngle:Forward() * offset.x + right * offset.y + up * offset.z
 end
 
@@ -139,6 +152,7 @@ function SWEP:ApplyTPIKArm(owner, model, side)
             end
         end
     end
+
     local elbow, wrist = self:SolveTPIKArm(shoulder, target:GetTranslation(), hint,
         upperLength, originalElbow:Distance(originalHand))
     if ( !elbow ) then return false end
@@ -165,17 +179,20 @@ function SWEP:ApplyTPIKArm(owner, model, side)
             MoveBone(owner, finger.index, pose)
         end
     end
+
     return true
 end
 
 --- Reports whether this weapon can currently supply a third-person arm pose.
 function SWEP:ShouldTPIK()
     if ( !self.TPIK or !enabled:GetBool() ) then return false end
+
     local owner = self:GetOwner()
     if ( !IsValid(owner) or !owner:IsPlayer() or !owner:Alive() or owner:GetActiveWeapon() != self ) then return false end
     if ( owner:IsPlayingTaunt() or (owner:InVehicle() and !owner:GetAllowWeaponsInVehicle()) ) then return false end
     if ( owner != LocalPlayer() and !others:GetBool() ) then return false end
     if ( EyePos():DistToSqr(owner:GetPos()) > distance:GetFloat() ^ 2 ) then return false end
+
     return true
 end
 
@@ -196,13 +213,16 @@ end
 function SWEP:GetTPIKModel()
     local path = self.TPIKModel or self.ViewModel
     if ( IsValid(self.tpikModel) and self.tpikModel:GetModel() != path ) then self:RemoveTPIKModel() end
+
     if ( !IsValid(self.tpikModel) ) then
         self.tpikModel = ClientsideModel(path, RENDERGROUP_OPAQUE)
         if ( !IsValid(self.tpikModel) ) then return end
+
         self.tpikModel:SetNoDraw(true)
         self.tpikModel:SetPlaybackRate(0)
         models[self] = self.tpikModel
     end
+
     return self.tpikModel
 end
 
@@ -212,6 +232,7 @@ function SWEP:IsTPIKLowered()
     if ( IsValid(owner) and isfunction(owner.IsWeaponRaised) ) then
         return !owner:IsWeaponRaised()
     end
+
     return self:GetLowered()
 end
 
@@ -230,6 +251,7 @@ function SWEP:GetTPIKOffset()
         else
             self.tpikLoweredAmount = math.Approach(self.tpikLoweredAmount, target, math.max(now - (self.tpikOffsetTime or now), 0) / duration)
         end
+
         self.tpikOffsetTime = now
         self.tpikOffsetFrame = FrameNumber()
     end
@@ -238,6 +260,7 @@ function SWEP:GetTPIKOffset()
     local position = raised.Pos or fallback.Pos or vector_origin
     local angle = raised.Ang or fallback.Ang or angle_zero
     local scale = raised.Scale or fallback.Scale or 1
+
     return LerpVector(amount, position, lowered.Pos or position),
         LerpAngle(amount, angle, lowered.Ang or angle),
         Lerp(amount, scale, lowered.Scale or scale)
@@ -261,12 +284,14 @@ end
 function SWEP:DoTPIK()
     self.tpikFrame = nil
     if ( !self:ShouldTPIK() ) then return end
+
     local owner = self:GetOwner()
     owner:InvalidateBoneCache()
     owner:SetupBones()
     owner.longswordHeadAimApplied = self:ApplyHeadAim(true) or nil
     local _, anchor = GetBone(owner, self.TPIKAnchor or "ValveBiped.Bip01_R_Hand")
     if ( !anchor ) then return end
+
     local model = self:GetTPIKModel()
     if ( !IsValid(model) ) then return end
 
@@ -275,6 +300,7 @@ function SWEP:DoTPIK()
     if ( name == "" ) then name = self.TPIKIdleSequence or "idle" end
     local sequence = model:LookupSequence(name)
     if ( sequence < 0 ) then return end
+
     local duration = model:SequenceDuration(sequence)
     local cycle = duration > 0 and math.max(CurTime() - start, 0) / duration or 0
     local info = model:GetSequenceInfo(sequence)
@@ -282,13 +308,16 @@ function SWEP:DoTPIK()
     model:SetSequence(sequence)
     model:SetCycle(cycle)
     model:SetSkin(self:GetSkin())
+
     for _, bodygroup in ipairs(model:GetBodyGroups()) do
         model:SetBodygroup(bodygroup.id, self:GetBodygroup(bodygroup.id))
     end
+
     self:PositionTPIKModel(model, anchor)
     model:InvalidateBoneCache()
     model:SetupBones()
     if ( !self:ApplyTPIKArm(owner, model, "R") ) then return end
+
     if ( !self.TPIKNoLeftHand and !owner:IsTyping() ) then self:ApplyTPIKArm(owner, model, "L") end
     self.tpikFrame = FrameNumber()
 end
@@ -296,15 +325,19 @@ end
 --- Draws the posed model only when its owner's current render pass has a valid TPIK solution.
 function SWEP:DrawTPIKWorldModel()
     if ( !self:ShouldTPIK() or self.tpikFrame != FrameNumber() or !IsValid(self.tpikModel) ) then return false end
+
     self.tpikModel:DrawModel()
     self:DrawWorldModelElements(self.tpikModel:GetPos(), self.tpikModel:GetAngles())
+
     return true
 end
 
 --- Applies the weapon's manual head tilt in the tracked look direction's local axes.
 function SWEP:GetHeadAimAngle(angle)
     if ( !isangle(self.HeadAimOffset) ) then return Angle(angle) end
+
     local _, rotated = LocalToWorld(vector_origin, self.HeadAimOffset, vector_origin, angle)
+
     return rotated
 end
 
@@ -314,16 +347,20 @@ function SWEP:ApplyHeadAim(bBonesReady)
     if ( !self.HeadTracksAim or !IsValid(owner) or !owner:Alive() or owner:GetActiveWeapon() != self ) then return false end
     if ( owner:IsPlayingTaunt() or (owner.ResolveForcedSequence and owner:ResolveForcedSequence()) ) then return false end
     if ( EyePos():DistToSqr(owner:GetPos()) > distance:GetFloat() ^ 2 ) then return false end
+
     if ( !bBonesReady ) then
         owner:InvalidateBoneCache()
         owner:SetupBones()
     end
+
     local head, matrix = GetBone(owner, "ValveBiped.Bip01_Head1")
     if ( !matrix ) then return false end
+
     if ( self.headAimModel != owner:GetModel() or !self.headAimRelative ) then
         local attachment = owner:LookupAttachment("eyes")
         local eyes = attachment > 0 and owner:GetAttachment(attachment)
         if ( !eyes ) then return false end
+
         local _, relative = WorldToLocal(vector_origin, matrix:GetAngles(), vector_origin, eyes.Ang)
         self.headAimRelative = relative
         self.headAimModel = owner:GetModel()
@@ -339,6 +376,7 @@ function SWEP:ApplyHeadAim(bBonesReady)
     local pose = Matrix(matrix)
     pose:SetAngles(rotation)
     MoveBone(owner, head, pose)
+
     return true
 end
 
@@ -348,9 +386,11 @@ local function PrePlayerDraw(owner)
     if ( owner.longswordHeadAimApplied and (!IsValid(weapon) or !weapon.HeadTracksAim) ) then
         owner:InvalidateBoneCache()
     end
+
     owner.longswordHeadAimApplied = nil
     if ( IsValid(weapon) and weapon.IsLongsword and weapon.DoTPIK ) then
         weapon:DoTPIK()
+
         if ( !owner.longswordHeadAimApplied and weapon.tpikFrame != FrameNumber() ) then
             owner.longswordHeadAimApplied = weapon:ApplyHeadAim() or nil
         end

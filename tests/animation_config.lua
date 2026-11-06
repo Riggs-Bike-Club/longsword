@@ -151,10 +151,12 @@ Check(weapon:ShouldAnimateHolster(), "Explicit holster enables the action")
 weapon.Animations.holster = false
 Check(not weapon:ShouldAnimateHolster(), "False disables holster")
 weapon.Animations.fire = { "fire1", "fire2" }
+
 for _ = 1, 10 do
     local animation = weapon:GetAnimation("fire")
     Check(animation == "fire1" or animation == "fire2", "Variant lists resolve one valid source")
 end
+
 weapon.Animations.fireLast = "last"
 Check(weapon:GetFireAnimation() == "last", "Last-shot definitions enable last-shot selection")
 weapon.bAimed = true
@@ -237,15 +239,19 @@ local timers = {}
 env.timer = { Simple = function(delay, callback)
     timers[#timers + 1] = {delay = delay, callback = callback}
 end }
+
 env.isfunction = function(value)
     return type(value) == "function"
 end
+
 function owner:Alive()
     return not self.dead
 end
+
 function owner:GetActiveWeapon()
     return self.activeWeapon
 end
+
 owner.activeWeapon = weapon
 env.game = { SinglePlayer = function() return false end }
 env.LocalPlayer = function() return owner end
@@ -261,6 +267,7 @@ local sounds = {}
 function weapon:EmitSound(sound, level, pitch, volume, channel, flags, dsp, filter)
     sounds[#sounds + 1] = {sound, level, pitch, volume, filter = filter}
 end
+
 local callbacks = 0
 weapon.AnimationEvents = {
     reload = {
@@ -271,6 +278,7 @@ weapon.AnimationEvents = {
         end},
     },
 }
+
 weapon:PlayAnim("reload")
 Check(#sounds == 1 and sounds[1][2] == 70 and sounds[1][3] == 95 and sounds[1][4] == 0.5, "Immediate events preserve sound options")
 Check(#timers == 1 and timers[1].delay == 0.5, "Delayed events use seconds")
@@ -305,6 +313,7 @@ local stopped = {}
 function weapon:StopSound(sound)
     stopped[#stopped + 1] = sound
 end
+
 weapon.AnimationEvents.spindown = {
     {time = 0, stopSound = {"windup", "motor"}, sound = "winddown"},
 }

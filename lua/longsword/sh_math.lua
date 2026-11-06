@@ -60,6 +60,7 @@ function longsword.math.vecQuadBezier(p1, p2, p3, t)
     local x = longsword.math.quadBezierLerp(p1.x, p2.x, p3.x, t)
     local y = longsword.math.quadBezierLerp(p1.y, p2.y, p3.y, t)
     local z = longsword.math.quadBezierLerp(p1.z, p2.z, p3.z, t)
+
     return Vector(x, y, z)
 end
 
@@ -74,6 +75,7 @@ function longsword.math.angQuadBezier(p1, p2, p3, t)
     local p = longsword.math.quadBezierLerp(p1.p, p2.p, p3.p, t)
     local y = longsword.math.quadBezierLerp(p1.y, p2.y, p3.y, t)
     local r = longsword.math.quadBezierLerp(p1.r, p2.r, p3.r, t)
+
     return Angle(p, y, r)
 end
 
@@ -112,6 +114,7 @@ function longsword.math.rotateAround(pos, ang, vec, rot)
     mat:Translate(vec)
     mat:Rotate(-rot)
     mat:Translate(-vec)
+
     return mat:GetTranslation(), mat:GetAngles()
 end
 

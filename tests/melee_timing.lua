@@ -53,6 +53,7 @@ setmetatable(env, {
         if key:match("^MAT_") then
             return key
         end
+
         return _G[key]
     end,
 })
@@ -96,6 +97,7 @@ local function Weapon()
     })
 
     owner.active = weapon
+
     function owner:GetActiveWeapon()
         return self.active
     end
@@ -145,6 +147,7 @@ local function Weapon()
     function weapon:QueueIdle()
         self.queuedIdle = true
     end
+
     return weapon, owner
 end
 
@@ -189,6 +192,7 @@ Check(#weapon.hits == 1 and #pending == 0, "Legacy nil hit delay stays immediate
 weapon = Weapon()
 weapon.HitAnims = "hit"
 weapon.GetSwingAnim = methods.GetSwingAnim
+
 function weapon:PickAnim(anim)
     return anim
 end

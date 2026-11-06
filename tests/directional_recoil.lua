@@ -1,15 +1,19 @@
 --- Verifies directional recoil strength and prediction filtering without moving a real player's view.
 local angleMeta = {}
 angleMeta.__index = angleMeta
+
 function angleMeta.__mul(angle, amount)
     return setmetatable({p = angle.p * amount, y = angle.y * amount, r = angle.r * amount}, angleMeta)
 end
+
 function angleMeta.__add(a, b)
     return setmetatable({p = a.p + b.p, y = a.y + b.y, r = a.r + b.r}, angleMeta)
 end
+
 local function MakeAngle(p, y, r)
     return setmetatable({p = p or 0, y = y or 0, r = r or 0}, angleMeta)
 end
+
 local methods = {}
 local bPredicted = true
 local env = setmetatable({
@@ -22,6 +26,7 @@ local env = setmetatable({
     hook = {Run = function() end},
     util = {SharedRandom = function(_, low, high) return (low + high) / 2 end},
 }, {__index = _G})
+
 local file = assert(io.open("lua/weapons/ls_base/common/effects.lua"))
 local source = file:read("*a")
 file:close()
@@ -31,10 +36,12 @@ local owner = {eyes = MakeAngle(), punches = 0}
 function owner:Crouching() return self.bCrouching end
 function owner:EyeAngles() return self.eyes end
 function owner:SetEyeAngles(angle) self.eyes = angle end
+
 function owner:ViewPunch(angle)
     self.punch = angle
     self.punches = self.punches + 1
 end
+
 local weapon = setmetatable({
     Primary = {Recoil = 0.1},
     Recoil = {Up = 12.5, Side = 1.5, RandomUp = 0.9, HipFireMultiplier = 1.25, CrouchMultiplier = 0.9, Kick = 0.6},

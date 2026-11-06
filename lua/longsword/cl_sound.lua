@@ -5,6 +5,7 @@ local function combineTables(useKeys, ...)
     if useKeys == nil then
         useKeys = true
     end
+
     local res = {}
 
     for _, tbl in pairs({ ... }) do
@@ -64,6 +65,7 @@ local soundMats = {
     [MAT_METAL] = true,
     [MAT_PLASTIC] = true
 }
+
 function meta:EmitDynSound(path, pitch, level, volume, noMuffle)
     pitch = pitch or 100
     level = level or 100
@@ -135,6 +137,7 @@ function meta:EmitDynSound(path, pitch, level, volume, noMuffle)
             dsp = (tr2.Entity != self) and 31 or 30
         end
     end
+
     self:EmitSound(path, level, pitch, volume, CHAN_AUTO, nil, nil)
     self:EmitSound(path, level, pitch, 0.4, CHAN_AUTO, nil, dsp)
 end

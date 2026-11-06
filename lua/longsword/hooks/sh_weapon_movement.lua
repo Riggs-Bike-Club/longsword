@@ -9,6 +9,7 @@ local function ApplyWeaponMovement(client, movement)
     if ( weapon:GetNextPrimaryFire() > CurTime() and client:KeyDown(IN_ATTACK) ) then
         multiplier = multiplier * (weapon.SpeedMultShooting or 1)
     end
+
     movement:SetMaxSpeed(movement:GetMaxSpeed() * multiplier)
     movement:SetMaxClientSpeed(movement:GetMaxClientSpeed() * multiplier)
 end

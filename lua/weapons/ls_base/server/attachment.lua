@@ -2,6 +2,7 @@ local wepMeta = FindMetaTable("Weapon")
 
 function wepMeta:GiveAttachment(id)
     if not self.IsLongsword then return end
+
     self.EquippedAttachments = self.EquippedAttachments or {}
     self.EquippedAttachments[id] = true
     
@@ -15,6 +16,7 @@ end
 
 function wepMeta:TakeAttachment(id)
     if not self.IsLongsword then return end
+
     self.EquippedAttachments = self.EquippedAttachments or {}
     self.EquippedAttachments[id] = nil
 

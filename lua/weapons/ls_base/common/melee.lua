@@ -10,6 +10,7 @@ function SWEP:PickMeleeAnim(anim)
     if #anim == 0 then return nil end
 
     local index = math.Clamp( math.floor( util.SharedRandom( "longsword.melee.animation", 1, #anim + 1 ) ), 1, #anim )
+
     return anim[index]
 end
 

@@ -69,12 +69,14 @@ function SWEP:GetAnimationDefinition(name)
     if ( self.Animations and self.Animations[name] != nil ) then
         return self.Animations[name]
     end
+
     for _, alias in ipairs(ANIMATION_ALIASES[name] or {}) do
         local parent, field = alias:match("^([^.]+)%.(.+)$")
         local value = self[alias]
         if ( parent and self[parent] ) then
             value = self[parent][field]
         end
+
         if ( value != nil and (!istable(value) or #value > 0) ) then
             return value
         end
@@ -99,7 +101,9 @@ function SWEP:GetAnimation(name)
     if ( definition == false ) then
         return
     end
+
     local animation
+
     if ( name:sub(1, 5) == "melee" and self.PickMeleeAnim ) then
         animation = self:PickMeleeAnim(definition)
     else
@@ -109,6 +113,7 @@ function SWEP:GetAnimation(name)
     if ( animation != nil ) then
         return animation
     end
+
     return ANIMATION_DEFAULTS[name]
 end
 
@@ -122,6 +127,7 @@ function SWEP:GetAnimationVariant(name, variant, bVariant)
     if ( bVariant and self:GetAnimationDefinition(variant) != nil ) then
         return self:GetAnimation(variant)
     end
+
     return self:GetAnimation(name)
 end
 
@@ -143,10 +149,12 @@ function SWEP:PlayPlayerAnimation(name)
     if ( !IsValid(owner) or animation == nil ) then
         return
     end
+
     if ( isstring(animation) ) then
         if ( SERVER and owner.ForceSequence and owner:LookupSequence(animation) >= 0 ) then
             owner:ForceSequence(animation)
         end
+
         return
     end
 
@@ -174,14 +182,17 @@ function SWEP:PlayAnim(act, bKeepCycle, bLoop)
     if ( act == nil or act == false ) then
         return
     end
+
     local vmodel = self:GetOwnerViewModel()
     if ( !vmodel ) then
         return
     end
+
     local seq = isstring(act) and vmodel:LookupSequence(act) or vmodel:SelectWeightedSequence(act)
     if ( !seq or seq == -1 ) then
         return longsword.debugPrint("Attempting to play invalid sequence " .. tostring(act) .. " on " .. self:GetClass() .. "!")
     end
+
     local cycle = bKeepCycle and vmodel:GetCycle() or nil
     if ( cycle != nil and self:GetIdleLoopEnd() > 0 ) then
         local duration = vmodel:SequenceDuration()
@@ -189,13 +200,16 @@ function SWEP:PlayAnim(act, bKeepCycle, bLoop)
             cycle = math.Clamp(1 - (self:GetIdleLoopEnd() - CurTime()) / duration, 0, 1)
         end
     end
+
     self.Inspecting = false
     self:SetIdleLoopEnd(0)
     vmodel:ResetSequenceInfo()
     vmodel:SendViewModelMatchingSequence(seq)
+
     if ( cycle ) then
         vmodel:SetCycle(cycle)
     end
+
     self:StartAnimationEvents(act, cycle)
     local duration = vmodel:SequenceDuration(seq)
     if ( bLoop and duration > 0 ) then
@@ -204,10 +218,12 @@ function SWEP:PlayAnim(act, bKeepCycle, bLoop)
             self:SetIdleLoopEnd(CurTime() + duration * (1 - (cycle or 0)))
         end
     end
+
     if ( self.TPIK and self.SetTPIKSequenceName and (SERVER or IsFirstTimePredicted()) ) then
         self:SetTPIKSequenceName(vmodel:GetSequenceName(seq))
         self:SetTPIKSequenceStart(CurTime() - (cycle or 0) * duration)
     end
+
     return duration
 end
 
@@ -219,16 +235,20 @@ function SWEP:EmitAnimationEventSound(owner, event)
     local soundName = event.sound
     if ( istable(soundName) ) then
         if ( #soundName == 0 ) then return end
+
         soundName = soundName[math.random(#soundName)]
     end
+
     if ( !isstring(soundName) ) then return end
 
     local recipients
+
     if ( SERVER and !game.SinglePlayer() and owner:IsPlayer() ) then
         recipients = RecipientFilter()
         recipients:AddPAS(self:GetPos())
         recipients:RemovePlayer(owner)
     end
+
     self:EmitSound(soundName, event.level or 60, event.pitch or 100, event.volume or 1, CHAN_AUTO, 0, 0, recipients)
 end
 
@@ -247,9 +267,11 @@ function SWEP:RunAnimationEvent(owner, serial, event)
             self:StopSound(soundName)
         end
     end
+
     if ( event.sound ) then
         self:EmitAnimationEventSound(owner, event)
     end
+
     if ( SERVER and isfunction(event.callback) ) then
         event.callback(self, event)
     end
@@ -296,8 +318,10 @@ function SWEP:PickAnim(anim)
         if ( #anim == 0 ) then
             return nil
         end
+
         return anim[math.random(#anim)]
     end
+
     return anim
 end
 
@@ -306,6 +330,7 @@ function SWEP:ResolveEmptyAnim(anim, emptyAnim)
     if ( emptyAnim and self:IsClipEmpty() ) then
         return emptyAnim
     end
+
     return anim
 end
 
@@ -333,6 +358,7 @@ function SWEP:ShouldAnimateHolster()
     if ( self.Animations and (self.Animations.holster != nil or self.Animations.holsterEmpty != nil) ) then
         return self:HasAnimation("holster") or self:HasAnimation("holsterEmpty")
     end
+
     return self.DoHolsterAnim == true
 end
 
@@ -350,6 +376,7 @@ function SWEP:ShouldAnimateProjectileFire()
     if ( self.Animations and self.Animations.bUseProjectileFire != nil ) then
         return self.Animations.bUseProjectileFire
     end
+
     return self.DoFireAnim == true
 end
 
@@ -365,11 +392,13 @@ function SWEP:PlayAnimWorld(act)
     if ( act == nil or act == false ) then
         return
     end
+
     local wmodel = self
     local seq = isstring(act) and wmodel:LookupSequence(act) or wmodel:SelectWeightedSequence(act)
     if ( !seq or seq < 0 ) then
         return
     end
+
     self:ResetSequence(seq)
 end
 
@@ -379,5 +408,6 @@ function SWEP:QueueIdle()
     if ( !viewModel ) then
         return
     end
+
     self:SetNextIdle(CurTime() + viewModel:SequenceDuration())
 end

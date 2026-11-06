@@ -19,6 +19,7 @@ local function ToggleDebugIronsights(client, commandName, arguments)
 
     local owner = LocalPlayer()
     if ( !IsValid(owner) ) then return end
+
     local weapon = owner:GetActiveWeapon()
     local bEnabled = arguments[1] == "1" or (arguments[1] == nil and debugIronsights.weapon != weapon)
 
