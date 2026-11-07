@@ -11,6 +11,11 @@ local env = setmetatable( {
     IN_ATTACK2 = 4,
     IN_USE = 5,
     ACT_VM_IDLE = "idle",
+    bit = {
+        band = function(a, b)
+            return a & b
+        end,
+    },
     CurTime = function()
         return now
     end,
@@ -88,6 +93,10 @@ local function Weapon()
         return self.duration
     end
 
+    function viewModel:GetSequenceInfo()
+        return { flags = 1 }
+    end
+
     function viewModel:GetCycle()
         return 0.5
     end
@@ -148,6 +157,14 @@ local function Weapon()
         self.nextIdle = value
     end
 
+    function weapon:GetIdleLoopEnd()
+        return self.idleLoopEnd or 0
+    end
+
+    function weapon:SetIdleLoopEnd(value)
+        self.idleLoopEnd = value
+    end
+
     function weapon:Clip1()
         return self.clip
     end
@@ -175,7 +192,10 @@ Check( not weapon:IsSprinting() and weapon:CanShoot(), "Sprint release must allo
 Check( weapon:CanIronsight(), "Sprint release must immediately allow aiming" )
 owner.keys[env.IN_SPEED] = true
 owner.keys[env.IN_WALK] = true
-Check( not weapon:IsSprinting(), "Walking must override sprint input" )
+Check( weapon:IsSprinting() and not weapon:CanShoot(), "Holding walk with sprint at run speed must still block firearm shots" )
+owner.speed = 100
+Check( not weapon:IsSprinting(), "Walking below run speed with sprint held must not block actions" )
+owner.speed = 300
 owner.keys[env.IN_WALK] = false
 owner.crouched = true
 Check( not weapon:IsSprinting(), "Crouching must not retain sprint lock" )

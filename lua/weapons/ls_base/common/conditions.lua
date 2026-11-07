@@ -1,9 +1,9 @@
---- Requires sprint input as well as movement so releasing sprint immediately frees weapon actions.
+--- Requires sprint input as well as movement so releasing sprint immediately frees weapon actions. The walk key is not checked: the engine still moves at run speed with walk and sprint held together, so the run speed threshold is what decides.
 ---@return boolean bSprinting
 function SWEP:IsSprinting()
     local owner = self:GetOwner()
     if ( !IsValid( owner ) ) then return false end
-    if ( !owner:KeyDown( IN_SPEED ) or owner:KeyDown( IN_WALK ) or owner:Crouching() ) then return false end
+    if ( !owner:KeyDown( IN_SPEED ) or owner:Crouching() ) then return false end
 
     return owner:GetVelocity():Length2D() > owner:GetRunSpeed() - 50
         and owner:IsOnGround()
