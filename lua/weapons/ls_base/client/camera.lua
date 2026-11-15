@@ -325,7 +325,9 @@ function SWEP:GetViewModelPosition( pos, ang )
 		local att
 		if muz > 0 then
 			att = vm:GetAttachment(muz)
-		else
+		end
+
+		if not att then
 			att = {
 				Pos = vm:LocalToWorld(Vector(20, -2, 0)),
 				Ang = vm:GetAngles()
