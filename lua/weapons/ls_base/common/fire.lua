@@ -60,6 +60,19 @@ function SWEP:AddRecoil()
 	self:SetRecoil( math.Clamp( self:GetRecoil() + self.Primary.Recoil * 0.4, 0, self.Primary.MaxRecoil or 1 ) )
 end
 
+local spreadQuery = { spread = 0 }
+
+--- Lets other code widen or tighten this weapon's cone for its owner right now. `LongswordAdjustSpread(weapon, owner, query)` writes `query.spread` in place, so any number of listeners can each scale it. It runs in the predicted path, so a listener has to give the server and the owner's client the same answer.
+---@realm shared
+---@param spread number
+---@return number spread
+function SWEP:AdjustSpread(spread)
+    spreadQuery.spread = spread
+    hook.Run("LongswordAdjustSpread", self, self:GetOwner(), spreadQuery)
+
+    return spreadQuery.spread
+end
+
 function SWEP:CalculateSpread()
     if ( self.Spread.Multiplicative ) then
         local spread = self.Primary.Cone
@@ -72,7 +85,7 @@ function SWEP:CalculateSpread()
         end
         local moving = math.Clamp(owner:GetVelocity():Length2D() / math.max(owner:GetWalkSpeed(), 1), 0, 1)
         spread = (spread + (self.Spread.MoveAdd or 0) * moving) * Lerp(moving, 1, self.Spread.MoveMod or 1)
-        return spread
+        return self:AdjustSpread(spread)
     end
 	local spread = self.Primary.Cone
 	local maxSpeed = self.LoweredPos and self:GetOwner():GetWalkSpeed() or self:GetOwner():GetRunSpeed()
@@ -93,6 +106,7 @@ function SWEP:CalculateSpread()
 	end
 
 	spread = math.Clamp( spread, self.Spread.Min, self.Spread.Max )
+	spread = self:AdjustSpread(spread)
 
 	if CLIENT then
 		self.LastSpread = spread

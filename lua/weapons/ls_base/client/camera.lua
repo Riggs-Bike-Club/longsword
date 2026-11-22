@@ -173,6 +173,20 @@ function SWEP:ViewIdleOffset(eyePos, eyeAng)
 	return longsword.math.translate(eyePos, eyeAng, pos, ang)
 end
 
+local swayQuery = { scale = 1, offset = Angle() }
+
+--- Lets other code scale this weapon's sway for its owner and add a movement of its own, such as a tremor. `LongswordAdjustSway(weapon, owner, query)` writes `query.scale` and `query.offset` in place, so any number of listeners can each have their say.
+---@realm client
+---@param sway Angle
+---@return Angle sway
+function SWEP:AdjustSway(sway)
+    swayQuery.scale = 1
+    swayQuery.offset:Zero()
+    hook.Run("LongswordAdjustSway", self, self:GetOwner(), swayQuery)
+
+    return sway * swayQuery.scale + swayQuery.offset
+end
+
 function SWEP:SwayThink()
 	local ft = FrameTime()
 
@@ -200,6 +214,7 @@ function SWEP:SwayThink()
 
 	dist = dist * 5.5
 	dist = dist * (self.SwayMul or 1)
+	dist = self:AdjustSway(dist)
 
 	dist.p = -math.Clamp(dist.p, -5, 5)
     dist.y = math.Clamp(dist.y, -5, 5)
